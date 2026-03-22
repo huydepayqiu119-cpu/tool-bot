@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
-    timeout-minutes: 5
+    timeout-minutes: 2
     steps:
       - name: Hide sensitive form data
         uses: actions/github-script@v7
