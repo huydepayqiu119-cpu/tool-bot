@@ -182,39 +182,47 @@ jobs:
       - name: Validate pack structure
         id: validate
         run: |
-          cd pack
-          if [ -d "./assets/oraxen" ]; then
-            MSG="This tool does not support Oraxen yet, please migrate your pack to ItemsAdder or Nexo first"
-            LINK_IA="http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder"
-            LINK_NEXO="http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
-            echo "::error::${MSG}"
-            mkdir -p ../error_out
-            printf '{"error":true,"message":"%s","link":"%s","link2":"%s"}' "${MSG}" "${LINK_IA}" "${LINK_NEXO}" > ../error_out/error_info.json
+          ERROR_FILE="${GITHUB_WORKSPACE}/error_out/error_info.json"
+          mkdir -p "${GITHUB_WORKSPACE}/error_out"
+
+          write_error() {
+            local msg="$1"
+            local link="$2"
+            local link2="$3"
+            echo "::error::${msg}"
+            if [ -n "${link2}" ]; then
+              printf '{"error":true,"message":"%s","link":"%s","link2":"%s"}' "${msg}" "${link}" "${link2}" > "${ERROR_FILE}"
+            else
+              printf '{"error":true,"message":"%s","link":"%s"}' "${msg}" "${link}" > "${ERROR_FILE}"
+            fi
+          }
+
+          PACK_DIR="${GITHUB_WORKSPACE}/pack"
+
+          if [ -d "${PACK_DIR}/assets/oraxen" ]; then
+            write_error \
+              "This tool does not support Oraxen yet, please migrate your pack to ItemsAdder or Nexo first" \
+              "http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder" \
+              "http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
             exit 1
-          elif ls ./ia_* > /dev/null 2>&1; then
-            if [ ! -d "./contents" ] || [ ! -f "./storage/items_ids_cache.yml" ]; then
-              MSG="Invalid pack structure! Detected ItemsAdder folder but missing `contents` or `storage/items_ids_cache.yml`"
-              LINK="http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder"
-              echo "::error::${MSG}"
-              mkdir -p ../error_out
-              printf '{"error":true,"message":"%s","link":"%s"}' "${MSG}" "${LINK}" > ../error_out/error_info.json
+          elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1; then
+            if [ ! -d "${PACK_DIR}/contents" ] || [ ! -f "${PACK_DIR}/storage/items_ids_cache.yml" ]; then
+              write_error \
+                "Invalid pack structure! Detected ItemsAdder folder but missing contents or storage/items_ids_cache.yml" \
+                "http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder"
               exit 1
             fi
-          elif ls ./nexo_* > /dev/null 2>&1; then
-            if [ ! -d "./items" ]; then
-              MSG="Invalid pack structure! Detected Nexo folder but missing `items`"
-              LINK="http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
-              echo "::error::${MSG}"
-              mkdir -p ../error_out
-              printf '{"error":true,"message":"%s","link":"%s"}' "${MSG}" "${LINK}" > ../error_out/error_info.json
+          elif ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1; then
+            if [ ! -d "${PACK_DIR}/items" ]; then
+              write_error \
+                "Invalid pack structure! Detected Nexo folder but missing items folder" \
+                "http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
               exit 1
             fi
           else
-            MSG="Invalid pack! No ItemsAdder or Nexo structure detected, please add your pack to ItemsAdder or Nexo first"
-            LINK="http://campfire-tools.dnipo.fun:25114/wiki/#vanilla"
-            echo "::error::${MSG}"
-            mkdir -p ../error_out
-            printf '{"error":true,"message":"%s","link":"%s"}' "${MSG}" "${LINK}" > ../error_out/error_info.json
+            write_error \
+              "Invalid pack! No ItemsAdder or Nexo structure detected, please add your pack to ItemsAdder or Nexo first" \
+              "http://campfire-tools.dnipo.fun:25114/wiki/#vanilla"
             exit 1
           fi
       - name: Upload error artifact
@@ -222,7 +230,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Error-${{ github.event.issue.number }}
-          path: error_out/error_info.json
+          path: ${{ github.workspace }}/error_out/error_info.json
           retention-days: 1
 
   generate-icons:
