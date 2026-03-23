@@ -172,14 +172,7 @@ jobs:
       actions: write
     timeout-minutes: 5
     steps:
-      - name: Download and prepare pack
-        env:
-          PACK_URL: ${{ needs.get-pack-info.outputs.pack_url }}
-        run: |
-          mkdir -p pack
-          curl -#L -o input_pack.zip "${PACK_URL}"
-          unzip -q input_pack.zip -d pack/
-      - name: Validate pack structure
+      - name: Download, prepare and validate pack
         id: validate
         run: |
           ERROR_FILE="${GITHUB_WORKSPACE}/error_out/error_info.json"
@@ -197,11 +190,11 @@ jobs:
             fi
           }
 
+          mkdir -p pack
+          curl -#L -o input_pack.zip "${PACK_URL}"
+          unzip -q input_pack.zip -d pack/ || true
+
           PACK_DIR="${GITHUB_WORKSPACE}/pack"
-          echo "=== PACK_DIR contents ==="
-          ls -la "${PACK_DIR}/" || echo "PACK_DIR does not exist"
-          echo "=== Top-level items ==="
-          find "${PACK_DIR}" -maxdepth 2 -type d | head -30
 
           if [ -d "${PACK_DIR}/assets/oraxen" ]; then
             write_error \
@@ -229,6 +222,8 @@ jobs:
               "http://campfire-tools.dnipo.fun:25114/wiki/#vanilla"
             exit 1
           fi
+        env:
+          PACK_URL: ${{ needs.get-pack-info.outputs.pack_url }}
       - name: Upload error artifact
         if: failure()
         uses: actions/upload-artifact@v4
