@@ -177,11 +177,8 @@ jobs:
         run: |
           ERROR_FILE="${GITHUB_WORKSPACE}/error_out/error_info.json"
           mkdir -p "${GITHUB_WORKSPACE}/error_out"
-
           write_error() {
-            local msg="$1"
-            local link="$2"
-            local link2="$3"
+            local msg="$1" link="$2" link2="$3"
             echo "::error::${msg}"
             if [ -n "${link2}" ]; then
               printf '{"error":true,"message":"%s","link":"%s","link2":"%s"}' "${msg}" "${link}" "${link2}" > "${ERROR_FILE}"
@@ -189,13 +186,10 @@ jobs:
               printf '{"error":true,"message":"%s","link":"%s"}' "${msg}" "${link}" > "${ERROR_FILE}"
             fi
           }
-
           mkdir -p pack
           curl -#L -o input_pack.zip "${PACK_URL}"
           unzip -q input_pack.zip -d pack/ || true
-
           PACK_DIR="${GITHUB_WORKSPACE}/pack"
-
           if [ -d "${PACK_DIR}/assets/oraxen" ]; then
             write_error \
               "This tool does not support Oraxen yet, please migrate your pack to ItemsAdder or Nexo first" \
