@@ -198,6 +198,10 @@ jobs:
           }
 
           PACK_DIR="${GITHUB_WORKSPACE}/pack"
+          echo "=== PACK_DIR contents ==="
+          ls -la "${PACK_DIR}/" || echo "PACK_DIR does not exist"
+          echo "=== Top-level items ==="
+          find "${PACK_DIR}" -maxdepth 2 -type d | head -30
 
           if [ -d "${PACK_DIR}/assets/oraxen" ]; then
             write_error \
