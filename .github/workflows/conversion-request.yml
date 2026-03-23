@@ -190,7 +190,7 @@ jobs:
           ISSUE_TITLE="${{ github.event.issue.title }}"
           if echo "${ISSUE_TITLE}" | grep -qi "V2" && echo "${ISSUE_TITLE}" | grep -qi "NON-OFFHAND"; then
             write_error \
-              "Mappings v2 is not supported if you are using non-offhand conversion, please read the instructions carefully ❓・faq [or read this link](http://campfire-tools.dnipo.fun:25114/wiki/#faq)"
+              "Mappings v2 is not supported if you are using non-offhand conversion, please read the instructions carefully ❓・faq or read this [link](http://campfire-tools.dnipo.fun:25114/wiki/#faq)"
             exit 1
           fi
           mkdir -p pack
@@ -206,14 +206,14 @@ jobs:
           elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1; then
             if [ ! -d "${PACK_DIR}/contents" ] || [ ! -f "${PACK_DIR}/storage/items_ids_cache.yml" ]; then
               write_error \
-                "Invalid pack structure! Detected ItemsAdder folder but missing `contents` or `storage/items_ids_cache.yml`" \
+                "Invalid pack structure! Detected ItemsAdder folder but missing \`contents\` or \`storage/items_ids_cache.yml\`" \
                 "http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder"
               exit 1
             fi
           elif ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1; then
             if [ ! -d "${PACK_DIR}/items" ]; then
               write_error \
-                "Invalid pack structure! Detected Nexo folder but missing `items` folder" \
+                "Invalid pack structure! Detected Nexo folder but missing \`items\` folder" \
                 "http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
               exit 1
             fi
