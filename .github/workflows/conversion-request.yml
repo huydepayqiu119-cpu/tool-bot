@@ -183,9 +183,17 @@ jobs:
         id: validate
         run: |
           cd pack
-          if ls ./ia_* > /dev/null 2>&1; then
+          if [ -d "./assets/oraxen" ]; then
+            MSG="This tool does not support Oraxen yet, please migrate your pack to ItemsAdder or Nexo first"
+            LINK_IA="http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder"
+            LINK_NEXO="http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
+            echo "::error::${MSG}"
+            mkdir -p ../error_out
+            printf '{"error":true,"message":"%s","link":"%s","link2":"%s"}' "${MSG}" "${LINK_IA}" "${LINK_NEXO}" > ../error_out/error_info.json
+            exit 2
+          elif ls ./ia_* > /dev/null 2>&1; then
             if [ ! -d "./contents" ] || [ ! -f "./storage/items_ids_cache.yml" ]; then
-              MSG="Invalid pack structure! Detected ItemsAdder folder but missing ./contents or ./storage/items_ids_cache.yml"
+              MSG="Invalid pack structure! Detected ItemsAdder folder but missing `contents` or `storage/items_ids_cache.yml`"
               LINK="http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder"
               echo "::error::${MSG}"
               mkdir -p ../error_out
@@ -194,7 +202,7 @@ jobs:
             fi
           elif ls ./nexo_* > /dev/null 2>&1; then
             if [ ! -d "./items" ]; then
-              MSG="Invalid pack structure! Detected Nexo folder but missing ./items"
+              MSG="Invalid pack structure! Detected Nexo folder but missing `items`"
               LINK="http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
               echo "::error::${MSG}"
               mkdir -p ../error_out
@@ -202,7 +210,7 @@ jobs:
               exit 2
             fi
           else
-            MSG="Invalid pack! No ItemsAdder or Nexo structure detected. Please add your pack to ItemsAdder or Nexo first"
+            MSG="Invalid pack! No ItemsAdder or Nexo structure detected, please add your pack to ItemsAdder or Nexo first"
             LINK="http://campfire-tools.dnipo.fun:25114/wiki/#vanilla"
             echo "::error::${MSG}"
             mkdir -p ../error_out
