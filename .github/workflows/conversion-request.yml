@@ -183,8 +183,8 @@ jobs:
         run: |
           cd pack
           if ls ./ia_* > /dev/null 2>&1; then
-            if [ ! -d "./content" ] || [ ! -f "./storage/items_ids_cache.yml" ]; then
-              MSG="Invalid pack structure! Detected ItemsAdder folder but missing ./content or ./storage/items_ids_cache.yml"
+            if [ ! -d "./contents" ] || [ ! -f "./storage/items_ids_cache.yml" ]; then
+              MSG="Invalid pack structure! Detected ItemsAdder folder but missing ./contents or ./storage/items_ids_cache.yml"
               LINK="http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder"
               echo "::error::${MSG}"
               mkdir -p ../error_out
