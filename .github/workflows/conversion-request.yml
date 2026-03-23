@@ -200,6 +200,23 @@ jobs:
           mkdir -p pack
           curl -#L -o input_pack.zip "${PACK_URL}"
           unzip -q input_pack.zip -d pack/
+      - name: Validate pack structure
+        run: |
+          cd pack
+          if ls ./ia_* > /dev/null 2>&1; then
+            if [ ! -d "./content" ] || [ ! -f "./storage/items_ids_cache.yml" ]; then
+              echo "::error::Invalid pack structure! Detected ItemsAdder folder but missing ./content or ./storage/items_ids_cache.yml"
+              exit 2
+            fi
+          elif ls ./nexo_* > /dev/null 2>&1; then
+            if [ ! -d "./items" ]; then
+              echo "::error::Invalid pack structure! Detected Nexo folder but missing ./items"
+              exit 2
+            fi
+          else
+            echo "::error::Invalid pack! No ItemsAdder or Nexo structure detected. Please add your pack to ItemsAdder or Nexo first"
+            exit 2
+          fi
       - name: Generate icons
         run: |
           mkdir -p staging/target/rp/textures
