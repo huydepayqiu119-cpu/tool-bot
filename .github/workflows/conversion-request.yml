@@ -169,6 +169,7 @@ jobs:
     needs: get-pack-info
     permissions:
       contents: read
+      actions: write
     timeout-minutes: 5
     steps:
       - name: Download and prepare pack
