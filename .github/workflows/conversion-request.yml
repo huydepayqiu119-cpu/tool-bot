@@ -190,7 +190,7 @@ jobs:
             echo "::error::${MSG}"
             mkdir -p ../error_out
             printf '{"error":true,"message":"%s","link":"%s","link2":"%s"}' "${MSG}" "${LINK_IA}" "${LINK_NEXO}" > ../error_out/error_info.json
-            exit 2
+            exit 1
           elif ls ./ia_* > /dev/null 2>&1; then
             if [ ! -d "./contents" ] || [ ! -f "./storage/items_ids_cache.yml" ]; then
               MSG="Invalid pack structure! Detected ItemsAdder folder but missing `contents` or `storage/items_ids_cache.yml`"
@@ -198,7 +198,7 @@ jobs:
               echo "::error::${MSG}"
               mkdir -p ../error_out
               printf '{"error":true,"message":"%s","link":"%s"}' "${MSG}" "${LINK}" > ../error_out/error_info.json
-              exit 2
+              exit 1
             fi
           elif ls ./nexo_* > /dev/null 2>&1; then
             if [ ! -d "./items" ]; then
@@ -207,7 +207,7 @@ jobs:
               echo "::error::${MSG}"
               mkdir -p ../error_out
               printf '{"error":true,"message":"%s","link":"%s"}' "${MSG}" "${LINK}" > ../error_out/error_info.json
-              exit 2
+              exit 1
             fi
           else
             MSG="Invalid pack! No ItemsAdder or Nexo structure detected, please add your pack to ItemsAdder or Nexo first"
@@ -215,10 +215,10 @@ jobs:
             echo "::error::${MSG}"
             mkdir -p ../error_out
             printf '{"error":true,"message":"%s","link":"%s"}' "${MSG}" "${LINK}" > ../error_out/error_info.json
-            exit 2
+            exit 1
           fi
       - name: Upload error artifact
-        if: failure() && steps.validate.outcome == 'failure'
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: Error-${{ github.event.issue.number }}
