@@ -387,6 +387,7 @@ jobs:
           path: |
             staging/campfire.mcpack
             staging/*.json
+            staging/campfire.log
       - name: Delete generated-icons artifact
         uses: geekyeggo/delete-artifact@v5
         with:
