@@ -196,7 +196,7 @@ jobs:
             if [ "${PACK_ROOT}" != "${PACK_DIR}" ]; then
               mv "${PACK_ROOT}"/* "${PACK_DIR}/" 2>/dev/null || true
               mv "${PACK_ROOT}"/.[!.]* "${PACK_DIR}/" 2>/dev/null || true
-              rmdir "${PACK_ROOT}" 2>/dev/null || true
+              rm -rf "${PACK_ROOT}"
             fi
           fi
           ISSUE_TITLE="${{ github.event.issue.title }}"
