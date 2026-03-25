@@ -388,8 +388,7 @@ jobs:
           cd staging
           chmod +x kaito.sh
           chmod +x kaito2.sh
-          # Dùng pack đã download từ validate-pack
-          zip -rq input_pack.zip ../pack/ -j || true
+          cd ../pack && zip -rq ../staging/input_pack.zip . && cd ../staging
           MERGE_PACK_FILE="${MERGE_PACK_URL}"
           if [ "${MERGE_PACK_URL}" != "null" ]; then
             COLUMNS=$COLUMNS-1 curl --no-styled-output -#L -o merge_pack.zip "${MERGE_PACK_URL}"
