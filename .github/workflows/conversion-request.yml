@@ -197,21 +197,30 @@ jobs:
           curl -#L -o input_pack.zip "${PACK_URL}"
           unzip -q input_pack.zip -d pack/ || true
           PACK_DIR="${GITHUB_WORKSPACE}/pack"
-          if [ -d "${PACK_DIR}/assets/oraxen" ]; then
+          MCMETA=$(find "${PACK_DIR}" -maxdepth 3 -name "pack.mcmeta" | head -1)
+          if [ -n "${MCMETA}" ]; then
+            PACK_ROOT="$(dirname "${MCMETA}")"
+            if [ "${PACK_ROOT}" != "${PACK_DIR}" ]; then
+              mv "${PACK_ROOT}"/* "${PACK_DIR}/" 2>/dev/null || true
+              mv "${PACK_ROOT}"/.[!.]* "${PACK_DIR}/" 2>/dev/null || true
+              rm -rf "${PACK_ROOT}"
+            fi
+          fi
+          if [ -d "${PACK_DIR}/assets/oraxen" ] || find "${PACK_DIR}" -maxdepth 4 -type d -path "*/assets/oraxen" | grep -q .; then
             write_error \
               "This tool does not support Oraxen yet, please migrate your pack to ItemsAdder or Nexo first" \
               "http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder" \
               "http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
             exit 1
-          elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1; then
-            if [ ! -d "${PACK_DIR}/contents" ] || [ ! -f "${PACK_DIR}/storage/items_ids_cache.yml" ]; then
+          elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "ia_*" | grep -q .; then
+            if [ ! -d "${PACK_DIR}/contents" ] && ! find "${PACK_DIR}" -maxdepth 4 -type d -name "contents" | grep -q .; then
               write_error \
                 "Invalid pack structure! Detected ItemsAdder folder but missing \`contents\` or \`storage/items_ids_cache.yml\`" \
                 "http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder"
               exit 1
             fi
-          elif ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1; then
-            if [ ! -d "${PACK_DIR}/items" ]; then
+          elif ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "nexo_*" | grep -q .; then
+            if [ ! -d "${PACK_DIR}/items" ] && ! find "${PACK_DIR}" -maxdepth 4 -type d -name "items" | grep -q .; then
               write_error \
                 "Invalid pack structure! Detected Nexo folder but missing \`items\` folder" \
                 "http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
