@@ -167,7 +167,6 @@ jobs:
   validate-pack:
     runs-on: ubuntu-latest
     needs: get-pack-info
-    if: "!contains(github.event.issue.title, '[FREE]')"
     permissions:
       contents: read
       actions: write
@@ -187,12 +186,6 @@ jobs:
               printf '{"error":true,"message":"%s","link":"%s"}' "${msg}" "${link}" > "${ERROR_FILE}"
             fi
           }
-          ISSUE_TITLE="${{ github.event.issue.title }}"
-          if echo "${ISSUE_TITLE}" | grep -qi "V2" && echo "${ISSUE_TITLE}" | grep -qi "NON-OFFHAND"; then
-            write_error \
-              "Mappings v2 is not supported if you are using non-offhand conversion, please read the instructions carefully ❓・faq or read this [link](http://campfire-tools.dnipo.fun:25114/wiki/#faq)"
-            exit 1
-          fi
           mkdir -p pack
           curl -#L -o input_pack.zip "${PACK_URL}"
           unzip -q input_pack.zip -d pack/ || true
@@ -203,37 +196,52 @@ jobs:
             if [ "${PACK_ROOT}" != "${PACK_DIR}" ]; then
               mv "${PACK_ROOT}"/* "${PACK_DIR}/" 2>/dev/null || true
               mv "${PACK_ROOT}"/.[!.]* "${PACK_DIR}/" 2>/dev/null || true
-              rm -rf "${PACK_ROOT}"
+              rmdir "${PACK_ROOT}" 2>/dev/null || true
             fi
           fi
-          if [ -d "${PACK_DIR}/assets/oraxen" ] || find "${PACK_DIR}" -maxdepth 4 -type d -path "*/assets/oraxen" | grep -q .; then
-            write_error \
-              "This tool does not support Oraxen yet, please migrate your pack to ItemsAdder or Nexo first" \
-              "http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder" \
-              "http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
-            exit 1
-          elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "ia_*" | grep -q .; then
-            if [ ! -d "${PACK_DIR}/contents" ] && ! find "${PACK_DIR}" -maxdepth 4 -type d -name "contents" | grep -q .; then
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          if ! echo "${ISSUE_TITLE}" | grep -qi "\[FREE\]"; then
+            if echo "${ISSUE_TITLE}" | grep -qi "V2" && echo "${ISSUE_TITLE}" | grep -qi "NON-OFFHAND"; then
               write_error \
-                "Invalid pack structure! Detected ItemsAdder folder but missing \`contents\` or \`storage/items_ids_cache.yml\`" \
-                "http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder"
+                "Mappings v2 is not supported if you are using non-offhand conversion, please read the instructions carefully ❓・faq or read this [link](http://campfire-tools.dnipo.fun:25114/wiki/#faq)"
               exit 1
             fi
-          elif ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "nexo_*" | grep -q .; then
-            if [ ! -d "${PACK_DIR}/items" ] && ! find "${PACK_DIR}" -maxdepth 4 -type d -name "items" | grep -q .; then
+            if [ -d "${PACK_DIR}/assets/oraxen" ] || find "${PACK_DIR}" -maxdepth 4 -type d -path "*/assets/oraxen" | grep -q .; then
               write_error \
-                "Invalid pack structure! Detected Nexo folder but missing \`items\` folder" \
+                "This tool does not support Oraxen yet, please migrate your pack to ItemsAdder or Nexo first" \
+                "http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder" \
                 "http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
               exit 1
+            elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "ia_*" | grep -q .; then
+              if [ ! -d "${PACK_DIR}/contents" ] && ! find "${PACK_DIR}" -maxdepth 4 -type d -name "contents" | grep -q .; then
+                write_error \
+                  "Invalid pack structure! Detected ItemsAdder folder but missing \`contents\` or \`storage/items_ids_cache.yml\`" \
+                  "http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder"
+                exit 1
+              fi
+            elif ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "nexo_*" | grep -q .; then
+              if [ ! -d "${PACK_DIR}/items" ] && ! find "${PACK_DIR}" -maxdepth 4 -type d -name "items" | grep -q .; then
+                write_error \
+                  "Invalid pack structure! Detected Nexo folder but missing \`items\` folder" \
+                  "http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
+                exit 1
+              fi
+            else
+              write_error \
+                "Invalid pack! No ItemsAdder or Nexo structure detected, please add your pack to ItemsAdder or Nexo first" \
+                "http://campfire-tools.dnipo.fun:25114/wiki/#vanilla"
+              exit 1
             fi
-          else
-            write_error \
-              "Invalid pack! No ItemsAdder or Nexo structure detected, please add your pack to ItemsAdder or Nexo first" \
-              "http://campfire-tools.dnipo.fun:25114/wiki/#vanilla"
-            exit 1
           fi
         env:
           PACK_URL: ${{ needs.get-pack-info.outputs.pack_url }}
+      - name: Upload pack artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: input-pack-${{ github.event.issue.number }}
+          path: pack/
+          retention-days: 1
       - name: Upload error artifact
         if: failure()
         uses: actions/upload-artifact@v4
@@ -307,6 +315,11 @@ jobs:
           repository: huydepayqiu119-cpu/tools-cua-bot
           token: ${{ secrets.TOOLS_PAT }}
           fetch-depth: 1
+      - name: Download pack artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: input-pack-${{ github.event.issue.number }}
+          path: pack/
       - name: Enable default asset cache
         id: cache-default-assets
         uses: actions/cache@v4
@@ -375,7 +388,8 @@ jobs:
           cd staging
           chmod +x kaito.sh
           chmod +x kaito2.sh
-          COLUMNS=$COLUMNS-1 curl --no-styled-output -#L -o input_pack.zip "${PACK_URL}"
+          # Dùng pack đã download từ validate-pack
+          zip -rq input_pack.zip ../pack/ -j || true
           MERGE_PACK_FILE="${MERGE_PACK_URL}"
           if [ "${MERGE_PACK_URL}" != "null" ]; then
             COLUMNS=$COLUMNS-1 curl --no-styled-output -#L -o merge_pack.zip "${MERGE_PACK_URL}"
@@ -389,6 +403,11 @@ jobs:
             ./kaito.sh input_pack.zip -w "false" -m ${MERGE_PACK_FILE} -a ${ATTACHABLE_MATERIAL} -b ${BLOCK_MATERIAL} -f ${DEFAULT_PACK_URL} -v ${DEFAULT_ASSETS_VERSION} -r ${RENAME_MODEL_FILES} -s ${ARCHIVE_SCRATCH}
           fi
           mv bedrock.mcpack campfire.mcpack
+      - name: Delete input pack artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: input-pack-${{ github.event.issue.number }}
+        continue-on-error: true
       - name: Upload converted pack
         uses: actions/upload-artifact@v4
         with:
