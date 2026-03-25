@@ -233,6 +233,7 @@ jobs:
               exit 1
             fi
           fi
+          cd "${PACK_DIR}" && zip -rq "${GITHUB_WORKSPACE}/input_pack.zip" . && cd "${GITHUB_WORKSPACE}"
         env:
           PACK_URL: ${{ needs.get-pack-info.outputs.pack_url }}
       - name: Upload pack artifact
@@ -240,7 +241,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: input-pack-${{ github.event.issue.number }}
-          path: pack/
+          path: input_pack.zip
           retention-days: 1
       - name: Upload error artifact
         if: failure()
@@ -319,7 +320,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: input-pack-${{ github.event.issue.number }}
-          path: pack/
+          path: ./
       - name: Enable default asset cache
         id: cache-default-assets
         uses: actions/cache@v4
@@ -385,10 +386,10 @@ jobs:
           cp animations/anim_3d.py staging/animations/
           mkdir -p staging/tools
           cp -r tools/* staging/tools/
+          mv input_pack.zip staging/input_pack.zip
           cd staging
           chmod +x kaito.sh
           chmod +x kaito2.sh
-          cd ../pack && zip -rq ../staging/input_pack.zip . && cd ../staging
           MERGE_PACK_FILE="${MERGE_PACK_URL}"
           if [ "${MERGE_PACK_URL}" != "null" ]; then
             COLUMNS=$COLUMNS-1 curl --no-styled-output -#L -o merge_pack.zip "${MERGE_PACK_URL}"
