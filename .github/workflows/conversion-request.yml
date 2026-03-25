@@ -198,6 +198,8 @@ jobs:
               rm -rf "${PACK_ROOT}"
             fi
           fi
+          echo "=== PACK_DIR contents after flatten ==="
+          ls "${PACK_DIR}"
           ISSUE_TITLE="${{ github.event.issue.title }}"
           if ! echo "${ISSUE_TITLE}" | grep -qi "\[FREE\]"; then
             if echo "${ISSUE_TITLE}" | grep -qi "V2" && echo "${ISSUE_TITLE}" | grep -qi "NON-OFFHAND"; then
