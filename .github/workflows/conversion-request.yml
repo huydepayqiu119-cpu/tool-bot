@@ -239,6 +239,7 @@ jobs:
               exit 1
             fi
           fi
+          rm -f "${GITHUB_WORKSPACE}/input_pack.zip"
           cd "${PACK_DIR}" && zip -rq "${GITHUB_WORKSPACE}/input_pack.zip" . --exclude "*.zip" && cd "${GITHUB_WORKSPACE}"
           echo "=== input_pack.zip top-level entries ==="
           unzip -Z1 "${GITHUB_WORKSPACE}/input_pack.zip" | head -5
