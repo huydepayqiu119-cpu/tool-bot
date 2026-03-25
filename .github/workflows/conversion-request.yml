@@ -235,7 +235,8 @@ jobs:
             fi
           fi
           cd "${PACK_DIR}" && zip -rq "${GITHUB_WORKSPACE}/input_pack.zip" . && cd "${GITHUB_WORKSPACE}"
-          # Tạo artifact nhỏ hơn cho generate-icons (chỉ cần assets/)
+          echo "=== input_pack.zip top-level entries ==="
+          unzip -Z1 "${GITHUB_WORKSPACE}/input_pack.zip" | head -20
           if [ -d "${PACK_DIR}/assets" ]; then
             cd "${PACK_DIR}" && zip -rq "${GITHUB_WORKSPACE}/icons_pack.zip" assets/ && cd "${GITHUB_WORKSPACE}"
           fi
