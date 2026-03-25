@@ -234,6 +234,10 @@ jobs:
             fi
           fi
           cd "${PACK_DIR}" && zip -rq "${GITHUB_WORKSPACE}/input_pack.zip" . && cd "${GITHUB_WORKSPACE}"
+          # Tạo artifact nhỏ hơn cho generate-icons (chỉ cần assets/)
+          if [ -d "${PACK_DIR}/assets" ]; then
+            cd "${PACK_DIR}" && zip -rq "${GITHUB_WORKSPACE}/icons_pack.zip" assets/ && cd "${GITHUB_WORKSPACE}"
+          fi
         env:
           PACK_URL: ${{ needs.get-pack-info.outputs.pack_url }}
       - name: Upload pack artifact
@@ -242,6 +246,13 @@ jobs:
         with:
           name: input-pack-${{ github.event.issue.number }}
           path: input_pack.zip
+          retention-days: 1
+      - name: Upload icons pack artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: icons-pack-${{ github.event.issue.number }}
+          path: icons_pack.zip
           retention-days: 1
       - name: Upload error artifact
         if: failure()
@@ -282,12 +293,14 @@ jobs:
         run: |
           npx puppeteer browsers install chrome
       - name: Download and prepare pack
-        env:
-          PACK_URL: ${{ needs.get-pack-info.outputs.pack_url }}
+        uses: actions/download-artifact@v4
+        with:
+          name: icons-pack-${{ github.event.issue.number }}
+          path: ./
+      - name: Extract icons pack
         run: |
           mkdir -p pack
-          curl -#L -o input_pack.zip "${PACK_URL}"
-          unzip -q input_pack.zip -d pack/
+          unzip -q icons_pack.zip -d pack/
       - name: Generate icons
         run: |
           mkdir -p staging/target/rp/textures
@@ -300,6 +313,11 @@ jobs:
           path: staging/target/rp/textures/
           retention-days: 1
           if-no-files-found: warn
+      - name: Delete icons pack artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: icons-pack-${{ github.event.issue.number }}
+        continue-on-error: true
           
   convert-pack:
     runs-on: ubuntu-latest
