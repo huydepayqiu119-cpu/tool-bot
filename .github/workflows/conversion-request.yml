@@ -191,11 +191,16 @@ jobs:
           unzip -q input_pack.zip -d pack/ || true
           PACK_DIR="${GITHUB_WORKSPACE}/pack"
           MCMETA=$(find "${PACK_DIR}" -maxdepth 3 -name "pack.mcmeta" | head -1)
+          echo "=== MCMETA found at: ${MCMETA} ==="
           if [ -n "${MCMETA}" ]; then
             PACK_ROOT="$(dirname "${MCMETA}")"
+            echo "=== PACK_ROOT: ${PACK_ROOT} ==="
+            echo "=== PACK_DIR: ${PACK_DIR} ==="
             if [ "${PACK_ROOT}" != "${PACK_DIR}" ]; then
               cp -r "${PACK_ROOT}/." "${PACK_DIR}/"
               rm -rf "${PACK_ROOT}"
+              echo "=== After rm -rf, PACK_DIR contents ==="
+              ls "${PACK_DIR}"
             fi
           fi
           echo "=== PACK_DIR contents after flatten ==="
