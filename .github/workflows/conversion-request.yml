@@ -191,16 +191,11 @@ jobs:
           unzip -q input_pack.zip -d pack/ || true
           PACK_DIR="${GITHUB_WORKSPACE}/pack"
           MCMETA=$(find "${PACK_DIR}" -maxdepth 3 -name "pack.mcmeta" | head -1)
-          echo "=== MCMETA found at: ${MCMETA} ==="
           if [ -n "${MCMETA}" ]; then
             PACK_ROOT="$(dirname "${MCMETA}")"
-            echo "=== PACK_ROOT: ${PACK_ROOT} ==="
-            echo "=== PACK_DIR: ${PACK_DIR} ==="
             if [ "${PACK_ROOT}" != "${PACK_DIR}" ]; then
               cp -r "${PACK_ROOT}/." "${PACK_DIR}/"
               rm -rf "${PACK_ROOT}"
-              echo "=== After rm -rf, PACK_DIR contents ==="
-              ls "${PACK_DIR}"
             fi
           fi
           echo "=== PACK_DIR contents after flatten ==="
@@ -241,8 +236,6 @@ jobs:
           fi
           rm -f "${GITHUB_WORKSPACE}/input_pack.zip"
           cd "${PACK_DIR}" && zip -rq "${GITHUB_WORKSPACE}/input_pack.zip" . --exclude "*.zip" && cd "${GITHUB_WORKSPACE}"
-          echo "=== input_pack.zip top-level entries ==="
-          unzip -Z1 "${GITHUB_WORKSPACE}/input_pack.zip" | head -5
           if [ -d "${PACK_DIR}/assets" ]; then
             cd "${PACK_DIR}" && zip -rq "${GITHUB_WORKSPACE}/icons_pack.zip" assets/ && cd "${GITHUB_WORKSPACE}"
           fi
