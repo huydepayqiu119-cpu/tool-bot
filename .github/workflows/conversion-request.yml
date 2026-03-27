@@ -359,6 +359,26 @@ jobs:
           sudo apt-get install -y moreutils zip unzip imagemagick
           yarn global add spritesheet-js
           pip install Pillow requests jproperties pyyaml
+      - name: Wait for generated-icons artifact
+        run: |
+          echo "Waiting for generated-icons artifact..."
+          for i in $(seq 1 60); do
+            STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
+              | jq -r '.artifacts[] | select(.name == "generated-icons") | .name' 2>/dev/null)
+            if [ "$STATUS" = "generated-icons" ]; then
+              echo "Artifact found after $i attempts"
+              break
+            fi
+            echo "Attempt $i: not ready yet, waiting 10s..."
+            sleep 10
+          done
+      - name: Download generated icons
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: generated-icons
+          path: staging/target/rp/textures/
       - name: Convert Pack
         id: convert-pack
         continue-on-error: false
