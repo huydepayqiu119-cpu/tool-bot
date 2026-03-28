@@ -212,9 +212,7 @@ jobs:
                 "http://campfire-tools.dnipo.fun:25114/wiki/#vanilla"
               exit 1
             else
-              write_error "Invalid pack structure! Expected one of the following structures:
-ItemsAdder: assets/ + ia_overlay_* + pack.mcmeta
-Nexo: assets/ + nexo_* + pack.mcmeta"
+              write_error "Invalid pack structure! Expected: ItemsAdder (assets/ + ia_overlay_* + pack.mcmeta) or Nexo (assets/ + nexo_* + pack.mcmeta)"
               exit 1
             fi
           else
