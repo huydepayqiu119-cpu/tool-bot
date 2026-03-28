@@ -202,10 +202,13 @@ jobs:
           ls "${PACK_DIR}"
           ISSUE_TITLE="${{ github.event.issue.title }}"
           if echo "${ISSUE_TITLE}" | grep -qi "\[FREE\]"; then
-            if ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "ia_*" | grep -q .; then
+            if ls "${PACK_DIR}"/ia_overlay_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "ia_overlay_*" | grep -q .; then
               :
             elif ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "nexo_*" | grep -q .; then
               :
+            elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "ia_*" | grep -q .; then
+              write_error "Invalid ItemsAdder pack structure! Please export from ItemsAdder output folder. Structure must be: assets/ + ia_overlay_* + pack.mcmeta"
+              exit 1
             elif [ -d "${PACK_DIR}/assets" ] && [ -f "${PACK_DIR}/pack.mcmeta" ]; then
               write_error \
                 "Invalid pack! Vanilla packs are not supported for [FREE] conversion, please add your pack to ItemsAdder or Nexo first" \
@@ -221,7 +224,7 @@ jobs:
                 "Mappings v2 is not supported if you are using non-offhand conversion, please read the instructions carefully ❓・faq or read this [link](http://campfire-tools.dnipo.fun:25114/wiki/#faq)"
               exit 1
             fi
-            if [ -d "${PACK_DIR}/assets/oraxen" ] || find "${PACK_DIR}" -maxdepth 4 -type d -path "*/assets/oraxen" | grep -q .; then
+            if [ -d "${PACK_DIR}/assets/oraxen" ]; then
               write_error \
                 "This tool does not support Oraxen yet, please migrate your pack to ItemsAdder or Nexo first" \
                 "http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder" \
