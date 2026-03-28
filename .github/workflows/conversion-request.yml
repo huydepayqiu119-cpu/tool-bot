@@ -201,7 +201,23 @@ jobs:
           echo "=== PACK_DIR contents after flatten ==="
           ls "${PACK_DIR}"
           ISSUE_TITLE="${{ github.event.issue.title }}"
-          if ! echo "${ISSUE_TITLE}" | grep -qi "\[FREE\]"; then
+          if echo "${ISSUE_TITLE}" | grep -qi "\[FREE\]"; then
+            if ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "ia_*" | grep -q .; then
+              :
+            elif ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "nexo_*" | grep -q .; then
+              :
+            elif [ -d "${PACK_DIR}/assets" ] && [ -f "${PACK_DIR}/pack.mcmeta" ]; then
+              write_error \
+                "Invalid pack! Vanilla packs are not supported for [FREE] conversion, please add your pack to ItemsAdder or Nexo first" \
+                "http://campfire-tools.dnipo.fun:25114/wiki/#vanilla"
+              exit 1
+            else
+              write_error "Invalid pack structure! Expected one of the following structures:
+ItemsAdder: assets/ + ia_overlay_* + pack.mcmeta
+Nexo: assets/ + nexo_* + pack.mcmeta"
+              exit 1
+            fi
+          else
             if echo "${ISSUE_TITLE}" | grep -qi "V2" && echo "${ISSUE_TITLE}" | grep -qi "NON-OFFHAND"; then
               write_error \
                 "Mappings v2 is not supported if you are using non-offhand conversion, please read the instructions carefully ❓・faq or read this [link](http://campfire-tools.dnipo.fun:25114/wiki/#faq)"
