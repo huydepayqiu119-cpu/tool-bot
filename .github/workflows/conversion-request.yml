@@ -203,7 +203,7 @@ jobs:
           ISSUE_TITLE="${{ github.event.issue.title }}"
           if echo "${ISSUE_TITLE}" | grep -qi "\[FREE\]"; then
             if [ -d "${PACK_DIR}/assets" ] && [ -f "${PACK_DIR}/pack.mcmeta" ] && ! ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 && ! ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1; then
-              write_error "Invalid pack! Vanilla packs are not supported.\n\n📦 **Nexo** — Pack Structure\n\`\`\`\npack.zip  # Exported from Nexo/pack\n├── assets\n├── nexo_*\n├── pack.mcmeta\n└── items\n\`\`\`\n\n📦 **ItemsAdder** — Pack Structure\n\`\`\`\ngenerated.zip  # Exported from ItemsAdder/output\n├── assets\n├── ia_overlay_*\n├── pack.mcmeta\n├── contents\n└── storage\n    └── items_ids_cache.yml\n\`\`\`"
+              write_error "Invalid pack! Please ensure that your pack has been added to \`Nexo\` or \`ItemsAdder\`, and follows the standard structure below\n\n📦 **Nexo** — Pack Structure\n\`\`\`\npack.zip  # Exported from Nexo/pack\n├── assets\n├── nexo_*\n└── pack.mcmeta\n\`\`\`\n\n📦 **ItemsAdder** — Pack Structure\n\`\`\`\ngenerated.zip  # Exported from ItemsAdder/output\n├── assets\n├── ia_overlay_*\n└── pack.mcmeta\n\`\`\`"
               exit 1
             fi
           else
