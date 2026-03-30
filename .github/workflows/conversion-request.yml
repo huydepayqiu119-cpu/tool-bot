@@ -193,7 +193,7 @@ jobs:
           MCMETA=$(find "${PACK_DIR}" -maxdepth 3 -name "pack.mcmeta" | head -1)
           if [ -n "${MCMETA}" ]; then
             PACK_ROOT="$(dirname "${MCMETA}")"
-            if [ "${PACK_ROOT}" != "${PACK_DIR}" ]; then
+            if [ "${PACK_ROOT}" != "${PACK_DIR}" ] && [[ "${PACK_ROOT}" != */contents* ]] && [[ "${PACK_ROOT}" != */storage* ]]; then
               cp -r "${PACK_ROOT}/." "${PACK_DIR}/"
               rm -rf "${PACK_ROOT}"
             fi
