@@ -219,7 +219,7 @@ jobs:
                 "http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
               exit 1
             elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "ia_*" | grep -q .; then
-              if [ ! -d "${PACK_DIR}/contents" ] && ! find "${PACK_DIR}" -maxdepth 4 -type d -name "contents" | grep -q .; then
+              if [ ! -d "${PACK_DIR}/contents" ] && ! find "${PACK_DIR}" -maxdepth 4 -type d -name "contents" | grep -q . && [ ! -d "${PACK_DIR}/storage" ] && ! find "${PACK_DIR}" -maxdepth 4 -type d -name "storage" | grep -q .; then
                 write_error \
                   "Invalid pack structure! Detected ItemsAdder folder but missing \`contents\` or \`storage/items_ids_cache.yml\`" \
                   "http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder"
