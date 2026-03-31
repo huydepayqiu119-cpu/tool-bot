@@ -442,7 +442,6 @@ jobs:
           path: |
             staging/campfire.mcpack
             staging/*.json
-            staging/campfire.log
             staging/contents.zip
             staging/README.md
       - name: Delete generated-icons artifact
