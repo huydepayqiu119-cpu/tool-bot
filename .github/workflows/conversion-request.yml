@@ -232,11 +232,6 @@ jobs:
                   "http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
                 exit 1
               fi
-            else
-              write_error \
-                "Invalid pack! No ItemsAdder or Nexo structure detected, please add your pack to ItemsAdder or Nexo first" \
-                "http://campfire-tools.dnipo.fun:25114/wiki/#vanilla"
-              exit 1
             fi
           fi
           rm -f "${GITHUB_WORKSPACE}/input_pack.zip"
@@ -444,6 +439,7 @@ jobs:
             staging/*.json
             staging/contents.zip
             staging/README.md
+            staging/items.zip
       - name: Delete generated-icons artifact
         uses: geekyeggo/delete-artifact@v5
         with:
