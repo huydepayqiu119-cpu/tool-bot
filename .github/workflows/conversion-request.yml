@@ -355,18 +355,31 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install dependencies
+        id: install-deps
         run: |
-          send_log() {
-            curl -s -X POST "${{ secrets.BOT_SERVER_URL }}/api/log/${{ github.event.issue.number }}" \
-              -H "Content-Type: application/json" \
-              -H "x-log-secret: ${{ secrets.LOG_SECRET }}" \
-              -d "{\"step\":\"$1\",\"status\":\"$2\",\"message\":\"$3\"}" || true
-          }
-          send_log "install-dependencies" "running" "Installing system packages..."
-          sudo apt-get install -y moreutils zip unzip imagemagick
-          yarn global add spritesheet-js
-          pip install Pillow requests jproperties pyyaml
-          send_log "install-dependencies" "success" "Dependencies installed"
+          mkdir -p "${GITHUB_WORKSPACE}/timeout_log"
+          (
+            sudo apt-get install -y moreutils zip unzip imagemagick
+            yarn global add spritesheet-js
+            pip install Pillow requests jproperties pyyaml
+          ) &
+          PID=$!
+          for i in $(seq 1 10); do kill -0 $PID 2>/dev/null || break; sleep 1; done
+          if kill -0 $PID 2>/dev/null; then
+            kill -9 $PID
+            printf '{"error":true,"message":"Ticket #${{ github.event.issue.number }} - xử lý quá thời gian"}' \
+              > "${GITHUB_WORKSPACE}/timeout_log/error_info.json"
+            exit 1
+          fi
+          wait $PID
+
+      - name: Upload timeout log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Error-${{ github.event.issue.number }}
+          path: ${{ github.workspace }}/timeout_log/error_info.json
+          retention-days: 1
       - name: Convert Pack
         id: convert-pack
         continue-on-error: false
@@ -404,12 +417,6 @@ jobs:
           JSON_UNICODE_CONVERSION: ${{ needs.get-pack-info.outputs.json_unicode_conversion }}
           ENCRYPT_PACK: ${{ needs.get-pack-info.outputs.encrypt_pack }}
         run: |
-          send_log() {
-            curl -s -X POST "${{ secrets.BOT_SERVER_URL }}/api/log/${{ github.event.issue.number }}" \
-              -H "Content-Type: application/json" \
-              -H "x-log-secret: ${{ secrets.LOG_SECRET }}" \
-              -d "{\"step\":\"$1\",\"status\":\"$2\",\"message\":\"$3\"}" || true
-          }
           mkdir -p staging
           mkdir -p staging/other
           cp *.sh staging/
@@ -427,12 +434,9 @@ jobs:
           chmod +x kaito2.sh
           MERGE_PACK_FILE="${MERGE_PACK_URL}"
           if [ "${MERGE_PACK_URL}" != "null" ]; then
-            send_log "download-merge-pack" "running" "Downloading merge pack..."
             COLUMNS=$COLUMNS-1 curl --no-styled-output -#L -o merge_pack.zip "${MERGE_PACK_URL}"
             MERGE_PACK_FILE="merge_pack.zip"
-            send_log "download-merge-pack" "success" "Merge pack downloaded"
           fi
-          send_log "convert" "running" "Converting pack..."
           if [ "${{ needs.get-pack-info.outputs.use_animate }}" == "true" ]; then
             echo "DEBUG: [ANIMATE] detected, running kaito2.sh"
             ./kaito2.sh input_pack.zip -w "false" -m ${MERGE_PACK_FILE} -a ${ATTACHABLE_MATERIAL} -b ${BLOCK_MATERIAL} -f ${DEFAULT_PACK_URL} -v ${DEFAULT_ASSETS_VERSION} -r ${RENAME_MODEL_FILES} -s ${ARCHIVE_SCRATCH}
@@ -440,7 +444,6 @@ jobs:
             echo "DEBUG: Running kaito.sh"
             ./kaito.sh input_pack.zip -w "false" -m ${MERGE_PACK_FILE} -a ${ATTACHABLE_MATERIAL} -b ${BLOCK_MATERIAL} -f ${DEFAULT_PACK_URL} -v ${DEFAULT_ASSETS_VERSION} -r ${RENAME_MODEL_FILES} -s ${ARCHIVE_SCRATCH}
           fi
-          send_log "convert" "success" "Conversion complete"
           [ -f bedrock.mcpack ] && mv bedrock.mcpack campfire.mcpack || true
           [ -f fix/contents.zip ] && mv fix/contents.zip contents.zip || true
           [ -f fix/README.md ] && mv fix/README.md README.md || true
@@ -475,12 +478,6 @@ jobs:
     permissions:
       issues: write
     steps:
-      - name: Log completion
-        run: |
-          curl -s -X POST "${{ secrets.BOT_SERVER_URL }}/api/log/${{ github.event.issue.number }}" \
-            -H "Content-Type: application/json" \
-            -H "x-log-secret: ${{ secrets.LOG_SECRET }}" \
-            -d '{"step":"done","status":"success","message":"Conversion finished, uploading artifact..."}' || true
       - name: Post Result
         id: post-result
         uses: peter-evans/create-or-update-comment@v4
@@ -509,12 +506,6 @@ jobs:
     permissions:
       issues: write
     steps:
-      - name: Log failure
-        run: |
-          curl -s -X POST "${{ secrets.BOT_SERVER_URL }}/api/log/${{ github.event.issue.number }}" \
-            -H "Content-Type: application/json" \
-            -H "x-log-secret: ${{ secrets.LOG_SECRET }}" \
-            -d '{"step":"done","status":"failed","message":"Workflow failed"}' || true
       - name: Post Result
         id: post-result
         uses: peter-evans/create-or-update-comment@v4
