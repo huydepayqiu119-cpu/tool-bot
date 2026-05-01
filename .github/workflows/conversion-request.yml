@@ -364,7 +364,7 @@ jobs:
             pip install Pillow requests jproperties pyyaml
           ) &
           PID=$!
-          for i in $(seq 1 45); do kill -0 $PID 2>/dev/null || break; sleep 1; done
+          for i in $(seq 1 5); do kill -0 $PID 2>/dev/null || break; sleep 1; done
           if kill -0 $PID 2>/dev/null; then
             kill -9 $PID
             printf '{"error":true,"message":"Ticket #${{ github.event.issue.number }} - xử lý quá thời gian"}' \
