@@ -225,8 +225,8 @@ jobs:
                   "http://campfire-tools.dnipo.fun:25114/wiki/#itemsadder"
                 exit 1
               fi
-            elif ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "nexo_*" | grep -q .; then
-              if [ ! -d "${PACK_DIR}/items" ] && ! find "${PACK_DIR}" -maxdepth 4 -type d -name "items" | grep -q .; then
+            elif find "${PACK_DIR}" -maxdepth 4 -type d -name "nexo_*" | grep -q . || find "${PACK_DIR}" -maxdepth 4 -name "nexo_*" | grep -q .; then
+              if [ ! -d "${PACK_DIR}/items" ]; then
                 write_error \
                   "Invalid pack structure! Detected Nexo folder but missing \`items\` folder" \
                   "http://campfire-tools.dnipo.fun:25114/wiki/#nexo"
