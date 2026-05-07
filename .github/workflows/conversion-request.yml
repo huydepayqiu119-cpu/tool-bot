@@ -229,7 +229,7 @@ jobs:
               fi
               if [ "${HAS_CONTENTS}" = false ] || [ "${HAS_STORAGE}" = false ]; then
                 write_error \
-                  "Invalid pack structure! It was detected that your pack was created by ItemsAdder but missing \`contents\` and \`storage/items_ids_cache.yml\` (both required)" \
+                  "Invalid pack structure! It was detected that your pack was created by ItemsAdder but missing \`contents\` and \`storage/items_ids_cache.yml\`" \
                   "http://thunder.pikamc.vn:25164/wiki/#itemsadder"
                 exit 1
               fi
