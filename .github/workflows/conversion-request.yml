@@ -229,14 +229,14 @@ jobs:
               fi
               if [ "${HAS_CONTENTS}" = false ] || [ "${HAS_STORAGE}" = false ]; then
                 write_error \
-                  "Invalid pack structure! Detected ItemsAdder folder but missing \`contents\` and \`storage/items_ids_cache.yml\` (both required)" \
+                  "Invalid pack structure! It was detected that your pack was created by ItemsAdder but missing \`contents\` and \`storage/items_ids_cache.yml\` (both required)" \
                   "http://thunder.pikamc.vn:25164/wiki/#itemsadder"
                 exit 1
               fi
             elif find "${PACK_DIR}" -maxdepth 4 -type d -name "nexo_*" | grep -q . || find "${PACK_DIR}" -maxdepth 4 -name "nexo_*" | grep -q .; then
               if [ ! -d "${PACK_DIR}/items" ]; then
                 write_error \
-                  "Invalid pack structure! Detected Nexo folder but missing \`items\` folder" \
+                  "Invalid pack structure! It was detected that your pack was created by Nexo but missing \`items\` folder" \
                   "http://thunder.pikamc.vn:25164/wiki/#nexo"
                 exit 1
               fi
