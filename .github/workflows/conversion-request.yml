@@ -219,9 +219,17 @@ jobs:
                 "http://thunder.pikamc.vn:25164/wiki/#nexo"
               exit 1
             elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "ia_*" | grep -q .; then
-              if [ ! -d "${PACK_DIR}/contents" ] && ! find "${PACK_DIR}" -maxdepth 4 -type d -name "contents" | grep -q . && [ ! -d "${PACK_DIR}/storage" ] && ! find "${PACK_DIR}" -maxdepth 4 -type d -name "storage" | grep -q .; then
+              HAS_CONTENTS=false
+              HAS_STORAGE=false
+              if [ -d "${PACK_DIR}/contents" ] || find "${PACK_DIR}" -maxdepth 4 -type d -name "contents" | grep -q .; then
+                HAS_CONTENTS=true
+              fi
+              if [ -d "${PACK_DIR}/storage" ] || find "${PACK_DIR}" -maxdepth 4 -type d -name "storage" | grep -q .; then
+                HAS_STORAGE=true
+              fi
+              if [ "${HAS_CONTENTS}" = false ] || [ "${HAS_STORAGE}" = false ]; then
                 write_error \
-                  "Invalid pack structure! Detected ItemsAdder folder but missing \`contents\` or \`storage/items_ids_cache.yml\`" \
+                  "Invalid pack structure! Detected ItemsAdder folder but missing \`contents\` and \`storage/items_ids_cache.yml\` (both required)" \
                   "http://thunder.pikamc.vn:25164/wiki/#itemsadder"
                 exit 1
               fi
