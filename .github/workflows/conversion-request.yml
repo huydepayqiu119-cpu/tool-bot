@@ -368,23 +368,6 @@ jobs:
 
           const SERVER_URL = process.env.SERVER_URL || 'http://localhost:25565';
 
-          async function getMEG4ServerURL() {
-              try {
-                  const response = await fetch(`${SERVER_URL}/api/meg4/server-ip`, {
-                      timeout: 5000
-                  });
-                  
-                  if (!response.ok) {
-                      throw new Error('MEG4 server not registered');
-                  }
-                  
-                  const data = await response.json();
-                  return data.url;
-              } catch (error) {
-                  throw new Error(`Cannot get MEG4 server IP: ${error.message}`);
-              }
-          }
-
           async function main() {
               const blueprintsDir = process.argv[2] || 'pack/blueprints';
               const outputPath = process.argv[3] || 'staging/meg4.zip';
@@ -411,10 +394,6 @@ jobs:
               
               console.log(`[meg4] Found ${subDirs.length} subdirectories: ${subDirs.join(', ')}`);
               
-              console.log('[meg4] Getting MEG4 server IP...');
-              const BETA_EXE_API = await getMEG4ServerURL();
-              console.log('[meg4] MEG4 server:', BETA_EXE_API);
-              
               const outputZips = [];
               const tempDir = path.join(__dirname, 'temp_meg4');
               fs.mkdirSync(tempDir, { recursive: true });
@@ -440,10 +419,10 @@ jobs:
                       });
                   }
                   
-                  console.log(`[meg4] Sending ${files.length} files to Beta EXE API...`);
+                  console.log(`[meg4] Sending ${files.length} files to queue...`);
                   
                   try {
-                      const convertResponse = await fetch(`${BETA_EXE_API}/api/meg4/convert`, {
+                      const queueResponse = await fetch(`${SERVER_URL}/api/meg4/queue`, {
                           method: 'POST',
                           headers: {
                               'Content-Type': 'application/json'
@@ -452,18 +431,46 @@ jobs:
                               files: filesData,
                               subdirName: subDir
                           }),
-                          timeout: 300000
+                          timeout: 10000
                       });
                       
-                      if (!convertResponse.ok) {
-                          const errorData = await convertResponse.json();
-                          throw new Error(errorData.error || 'Conversion failed');
+                      if (!queueResponse.ok) {
+                          const errorData = await queueResponse.json();
+                          throw new Error(errorData.error || 'Failed to queue request');
                       }
                       
-                      const result = await convertResponse.json();
+                      const queueResult = await queueResponse.json();
+                      const requestId = queueResult.requestId;
                       
-                      if (!result.success) {
-                          throw new Error(result.error || 'Conversion failed');
+                      console.log(`[meg4] Request queued: ${requestId}`);
+                      console.log(`[meg4] Waiting for conversion...`);
+                      
+                      let result = null;
+                      for (let i = 0; i < 120; i++) {
+                          await new Promise(resolve => setTimeout(resolve, 5000));
+                          
+                          const resultResponse = await fetch(`${SERVER_URL}/api/meg4/result/${requestId}`, {
+                              timeout: 5000
+                          });
+                          
+                          if (!resultResponse.ok) {
+                              continue;
+                          }
+                          
+                          const resultData = await resultResponse.json();
+                          
+                          if (resultData.ready) {
+                              result = resultData;
+                              break;
+                          }
+                          
+                          if (i % 6 === 0) {
+                              console.log(`[meg4] Still waiting... (${i * 5}s)`);
+                          }
+                      }
+                      
+                      if (!result || !result.success) {
+                          throw new Error(result?.error || 'Conversion timeout');
                       }
                       
                       const zipPath = path.join(tempDir, `${subDir}.zip`);
