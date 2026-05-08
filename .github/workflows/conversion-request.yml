@@ -356,8 +356,6 @@ jobs:
           unzip -q input_pack.zip -d pack
       - name: Install dependencies
         run: npm install adm-zip node-fetch@2
-      - name: Copy meg4_api_client.js
-        run: cp meg4_api_client.js .
       - name: Run MEG4 export
         env:
           SERVER_URL: ${{ secrets.SERVER_URL || 'http://thunder.pikamc.vn:25164' }}
