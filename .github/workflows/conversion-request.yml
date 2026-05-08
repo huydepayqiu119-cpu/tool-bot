@@ -327,10 +327,222 @@ jobs:
         with:
           name: icons-pack-${{ github.event.issue.number }}
         continue-on-error: true
+
+  meg4-export:
+    runs-on: ubuntu-latest
+    needs: [get-pack-info, validate-pack]
+    if: always() && needs.get-pack-info.result == 'success' && (needs.validate-pack.result == 'success' || needs.validate-pack.result == 'skipped')
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: huydepayqiu119-cpu/tools-cua-bot
+          token: ${{ secrets.TOOLS_PAT }}
+          fetch-depth: 1
+      - name: Install NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Download pack artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: input-pack-${{ github.event.issue.number }}
+          path: ./
+      - name: Extract pack
+        run: |
+          mkdir -p pack staging
+          unzip -q input_pack.zip -d pack
+          echo "Pack extracted successfully"
+      - name: Install dependencies
+        run: |
+          npm install adm-zip node-fetch@2
+      - name: Copy meg4_api_client.js
+        run: |
+          cat > meg4_api_client.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          const fetch = require('node-fetch');
+          const AdmZip = require('adm-zip');
+
+          const SERVER_URL = process.env.SERVER_URL || 'http://localhost:25565';
+
+          async function getMEG4ServerURL() {
+              try {
+                  const response = await fetch(`${SERVER_URL}/api/meg4/server-ip`, {
+                      timeout: 5000
+                  });
+                  
+                  if (!response.ok) {
+                      throw new Error('MEG4 server not registered');
+                  }
+                  
+                  const data = await response.json();
+                  return data.url;
+              } catch (error) {
+                  throw new Error(`Cannot get MEG4 server IP: ${error.message}`);
+              }
+          }
+
+          async function main() {
+              const blueprintsDir = process.argv[2] || 'pack/blueprints';
+              const outputPath = process.argv[3] || 'staging/meg4.zip';
+              
+              console.log('[meg4] Starting MEG4 export...');
+              console.log('[meg4] Input:', blueprintsDir);
+              console.log('[meg4] Output:', outputPath);
+              console.log('[meg4] Server:', SERVER_URL);
+              
+              if (!fs.existsSync(blueprintsDir)) {
+                  console.error('[meg4] Blueprints directory not found');
+                  process.exit(1);
+              }
+              
+              const subDirs = fs.readdirSync(blueprintsDir).filter(f => {
+                  const fullPath = path.join(blueprintsDir, f);
+                  return fs.statSync(fullPath).isDirectory();
+              });
+              
+              if (subDirs.length === 0) {
+                  console.error('[meg4] No subdirectories found');
+                  process.exit(1);
+              }
+              
+              console.log(`[meg4] Found ${subDirs.length} subdirectories: ${subDirs.join(', ')}`);
+              
+              console.log('[meg4] Getting MEG4 server IP...');
+              const BETA_EXE_API = await getMEG4ServerURL();
+              console.log('[meg4] MEG4 server:', BETA_EXE_API);
+              
+              const outputZips = [];
+              const tempDir = path.join(__dirname, 'temp_meg4');
+              fs.mkdirSync(tempDir, { recursive: true });
+              
+              for (const subDir of subDirs) {
+                  const subDirPath = path.join(blueprintsDir, subDir);
+                  const files = fs.readdirSync(subDirPath).filter(f => f.endsWith('.bbmodel'));
+                  
+                  if (files.length === 0) {
+                      console.log(`[meg4] ${subDir}: No .bbmodel files, skipping`);
+                      continue;
+                  }
+                  
+                  console.log(`[meg4] Processing ${subDir} (${files.length} files)`);
+                  
+                  const filesData = [];
+                  for (const file of files) {
+                      const filePath = path.join(subDirPath, file);
+                      const content = fs.readFileSync(filePath, 'utf8');
+                      filesData.push({
+                          filename: file,
+                          content: content
+                      });
+                  }
+                  
+                  console.log(`[meg4] Sending ${files.length} files to Beta EXE API...`);
+                  
+                  try {
+                      const convertResponse = await fetch(`${BETA_EXE_API}/api/meg4/convert`, {
+                          method: 'POST',
+                          headers: {
+                              'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({
+                              files: filesData,
+                              subdirName: subDir
+                          }),
+                          timeout: 300000
+                      });
+                      
+                      if (!convertResponse.ok) {
+                          const errorData = await convertResponse.json();
+                          throw new Error(errorData.error || 'Conversion failed');
+                      }
+                      
+                      const result = await convertResponse.json();
+                      
+                      if (!result.success) {
+                          throw new Error(result.error || 'Conversion failed');
+                      }
+                      
+                      const zipPath = path.join(tempDir, `${subDir}.zip`);
+                      const zipBuffer = Buffer.from(result.content, 'base64');
+                      fs.writeFileSync(zipPath, zipBuffer);
+                      
+                      console.log(`[meg4] ✓ Exported ${subDir}.zip (${result.size} bytes)`);
+                      outputZips.push(zipPath);
+                      
+                  } catch (error) {
+                      console.error(`[meg4] Failed to convert ${subDir}:`, error.message);
+                  }
+              }
+              
+              if (outputZips.length === 0) {
+                  console.error('[meg4] No models were exported');
+                  process.exit(1);
+              }
+              
+              console.log(`[meg4] Creating final zip from ${outputZips.length} files...`);
+              const finalZip = new AdmZip();
+              for (const zipPath of outputZips) {
+                  const zipData = fs.readFileSync(zipPath);
+                  finalZip.addFile(path.basename(zipPath), zipData);
+              }
+              
+              fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+              finalZip.writeZip(outputPath);
+              
+              const finalSize = fs.statSync(outputPath).size;
+              console.log(`[meg4] ✓ Final output: ${outputPath} (${finalSize} bytes)`);
+              
+              fs.rmSync(tempDir, { recursive: true, force: true });
+              
+              console.log('[meg4] Done!');
+          }
+
+          main().catch(error => {
+              console.error('[meg4] Error:', error.message);
+              process.exit(1);
+          });
+          EOF
+      - name: Run MEG4 export via Beta EXE API
+        env:
+          SERVER_URL: ${{ secrets.SERVER_URL || 'http://thunder.pikamc.vn:25164' }}
+        run: |
+          if [ -d "pack/blueprints" ]; then
+            BBMODEL_COUNT=$(find pack/blueprints -name "*.bbmodel" | wc -l)
+            echo "Found $BBMODEL_COUNT .bbmodel files"
+            
+            if [ "$BBMODEL_COUNT" -gt 0 ]; then
+              echo "Running MEG4 export via Beta EXE API..."
+              echo "Server URL: $SERVER_URL"
+              node meg4_api_client.js pack/blueprints staging/meg4.zip
+              
+              if [ -f "staging/meg4.zip" ] && [ -s "staging/meg4.zip" ]; then
+                echo "✓ MEG4 export completed successfully"
+                ls -lh staging/meg4.zip
+              else
+                echo "✗ MEG4 export failed"
+              fi
+            else
+              echo "No .bbmodel files found"
+            fi
+          else
+            echo "No blueprints directory found"
+          fi
+        continue-on-error: true
+      - name: Upload meg4 output
+        uses: actions/upload-artifact@v4
+        with:
+          name: meg4-output-${{ github.event.issue.number }}
+          path: staging/meg4.zip
+          retention-days: 1
+          if-no-files-found: warn
           
   convert-pack:
     runs-on: ubuntu-latest
-    needs: [get-pack-info, validate-pack]
+    needs: [get-pack-info, validate-pack, meg4-export]
     if: always() && needs.get-pack-info.result == 'success' && (needs.validate-pack.result == 'success' || needs.validate-pack.result == 'skipped')
     permissions:
       contents: read
@@ -348,6 +560,12 @@ jobs:
         with:
           name: input-pack-${{ github.event.issue.number }}
           path: ./
+      - name: Download meg4 output
+        uses: actions/download-artifact@v4
+        with:
+          name: meg4-output-${{ github.event.issue.number }}
+          path: staging/
+        continue-on-error: true
       - name: Enable default asset cache
         id: cache-default-assets
         uses: actions/cache@v4
@@ -479,6 +697,11 @@ jobs:
         with:
           name: generated-icons
         continue-on-error: true
+      - name: Delete meg4-output artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: meg4-output-${{ github.event.issue.number }}
+        continue-on-error: true
   post-result:
     runs-on: ubuntu-latest
     needs: convert-pack
@@ -508,8 +731,8 @@ jobs:
           issue-number: ${{ github.event.issue.number }}
   conversion-failed:
     runs-on: ubuntu-latest
-    needs: [get-pack-info, validate-pack, generate-icons, convert-pack, post-result]
-    if: always() && (needs.get-pack-info.result == 'failure' || needs.validate-pack.result == 'failure' || needs.generate-icons.result == 'failure' || needs.convert-pack.result == 'failure' || needs.convert-pack.result == 'post-result')
+    needs: [get-pack-info, validate-pack, generate-icons, meg4-export, convert-pack, post-result]
+    if: always() && (needs.get-pack-info.result == 'failure' || needs.validate-pack.result == 'failure' || needs.generate-icons.result == 'failure' || needs.meg4-export.result == 'failure' || needs.convert-pack.result == 'failure' || needs.convert-pack.result == 'post-result')
     timeout-minutes: 2
     permissions:
       issues: write
@@ -526,6 +749,7 @@ jobs:
               - Get Pack Info: *${{ needs.get-pack-info.result }}*
               - Validate Pack: *${{ needs.validate-pack.result }}*
               - Generate Icons / Validate: *${{ needs.generate-icons.result }}*
+              - MEG4 Export: *${{ needs.meg4-export.result }}*
               - Convert Pack: *${{ needs.convert-pack.result }}*
               - Post Result: *${{ needs.post-result.result }}*
 
