@@ -367,11 +367,11 @@ jobs:
             fi
           fi
         continue-on-error: true
-      - name: Upload meg4 output
+      - name: Upload plugins folder
         uses: actions/upload-artifact@v4
         with:
           name: meg4-output-${{ github.event.issue.number }}
-          path: staging/meg4.zip
+          path: plugins/
           retention-days: 1
           if-no-files-found: warn
           
