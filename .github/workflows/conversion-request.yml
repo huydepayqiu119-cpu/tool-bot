@@ -466,6 +466,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_ISSUE_NUMBER: ${{ github.event.issue.number }}
           GITHUB_ISSUE_TITLE: ${{ github.event.issue.title }}
           PYTHONUNBUFFERED: "1"
           PACK_URL: ${{ needs.get-pack-info.outputs.pack_url }}
@@ -541,10 +542,8 @@ jobs:
             staging/contents.zip
             staging/README.md
             staging/items.zip
-            staging/DisplayEntity (README)/*.jar
-            staging/DisplayEntity (README)/*.md
-            staging/DisplayEntity (README)/*.mcpack
-            staging/DisplayEntity (README)/geyserdisplayentity
+            staging/DisplayEntity (README)/**
+            staging/ModelEngine 4 (README)/**
       - name: Delete generated-icons artifact
         uses: geekyeggo/delete-artifact@v5
         with:
