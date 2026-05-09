@@ -387,6 +387,9 @@ jobs:
           if [ -d "plugins" ]; then
             cp -r plugins artifact/
           fi
+          if [ -f "README.md" ]; then
+            cp README.md artifact/
+          fi
       - name: Upload plugins folder
         if: steps.check-blueprints.outputs.has_blueprints == 'true'
         uses: actions/upload-artifact@v4
