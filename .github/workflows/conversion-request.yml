@@ -230,6 +230,22 @@ jobs:
                   exit 1
                 fi
               fi
+            else
+              if find "${PACK_DIR}" -maxdepth 4 -type d -name "oraxen_*" | grep -q . || find "${PACK_DIR}" -maxdepth 4 -name "oraxen_*" | grep -q . || [ -d "${PACK_DIR}/assets/oraxen" ]; then
+                if [ ! -d "${PACK_DIR}/items" ]; then
+                  write_error "Invalid pack structure! It was detected that your pack was created by Oraxen but missing \`items\` folder"
+                  exit 1
+                fi
+              fi
+              MCMETA_FILE=$(find "${PACK_DIR}" -maxdepth 3 -name "pack.mcmeta" | head -1)
+              if [ -n "${MCMETA_FILE}" ] && [ -f "${MCMETA_FILE}" ]; then
+                if grep -qi "CraftEngine ResourcePack\|CraftEngine" "${MCMETA_FILE}"; then
+                  if [ ! -d "${PACK_DIR}/resources" ]; then
+                    write_error "Invalid pack structure! It was detected that your pack was created by CraftEngine but missing \`resources\` folder"
+                    exit 1
+                  fi
+                fi
+              fi
             fi
             if ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "ia_*" | grep -q .; then
               HAS_CONTENTS=false
