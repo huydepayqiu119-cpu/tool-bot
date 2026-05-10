@@ -231,7 +231,7 @@ jobs:
                 fi
               fi
             fi
-            elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "ia_*" | grep -q .; then
+            if ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "ia_*" | grep -q .; then
               HAS_CONTENTS=false
               HAS_STORAGE=false
               if [ -d "${PACK_DIR}/contents" ] || find "${PACK_DIR}" -maxdepth 4 -type d -name "contents" | grep -q .; then
