@@ -212,12 +212,25 @@ jobs:
                 "Mappings v2 is not supported if you are using non-offhand conversion, please read the instructions carefully ❓・faq or read this [link](http://thunder.pikamc.vn:25164/wiki/#faq)"
               exit 1
             fi
-            if [ -d "${PACK_DIR}/assets/oraxen" ]; then
-              write_error \
-                "This tool does not support Oraxen yet, please migrate your pack to ItemsAdder or Nexo first" \
-                "http://thunder.pikamc.vn:25164/wiki/#itemsadder" \
-                "http://thunder.pikamc.vn:25164/wiki/#nexo"
-              exit 1
+            if ! echo "${ISSUE_TITLE}" | grep -qi "\[EXE\]"; then
+              if [ -d "${PACK_DIR}/assets/oraxen" ]; then
+                write_error \
+                  "This tool does not support Oraxen yet, please migrate your pack to ItemsAdder or Nexo first" \
+                  "http://thunder.pikamc.vn:25164/wiki/#itemsadder" \
+                  "http://thunder.pikamc.vn:25164/wiki/#nexo"
+                exit 1
+              fi
+              MCMETA_FILE=$(find "${PACK_DIR}" -maxdepth 3 -name "pack.mcmeta" | head -1)
+              if [ -n "${MCMETA_FILE}" ] && [ -f "${MCMETA_FILE}" ]; then
+                if grep -qi "CraftEngine ResourcePack\|CraftEngine" "${MCMETA_FILE}"; then
+                  write_error \
+                    "This tool does not support CraftEngine yet, please migrate your pack to ItemsAdder or Nexo first" \
+                    "http://thunder.pikamc.vn:25164/wiki/#itemsadder" \
+                    "http://thunder.pikamc.vn:25164/wiki/#nexo"
+                  exit 1
+                fi
+              fi
+            fi
             elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "ia_*" | grep -q .; then
               HAS_CONTENTS=false
               HAS_STORAGE=false
