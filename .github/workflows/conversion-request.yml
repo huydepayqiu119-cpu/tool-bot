@@ -343,6 +343,26 @@ jobs:
         run: |
           mkdir -p staging/target/rp/textures
           node tools/generate-simple.js || echo "Icon generation failed, continuing..."
+      - name: Check generated icons
+        id: check-icons
+        run: |
+          if [ -d "staging/target/rp/textures" ]; then
+            ICON_COUNT=$(find staging/target/rp/textures -name "*.png" 2>/dev/null | wc -l)
+            if [ "$ICON_COUNT" -gt 0 ]; then
+              echo "has_icons=true" >> $GITHUB_OUTPUT
+              echo "Generated $ICON_COUNT icon files"
+            else
+              echo "has_icons=false" >> $GITHUB_OUTPUT
+              echo "No icons generated"
+              mkdir -p staging/target/rp/textures
+              echo '{"error": true, "message": "No 3D icons generated"}' > staging/target/rp/textures/NO_ICONS.json
+            fi
+          else
+            echo "has_icons=false" >> $GITHUB_OUTPUT
+            echo "Textures directory not found"
+            mkdir -p staging/target/rp/textures
+            echo '{"error": true, "message": "No 3D icons generated"}' > staging/target/rp/textures/NO_ICONS.json
+          fi
       - name: Upload generated icons
         uses: actions/upload-artifact@v4
         if: always()
@@ -419,8 +439,14 @@ jobs:
           if [ -f "README.md" ]; then
             cp README.md artifact/
           fi
+      - name: Create empty artifact (no blueprints)
+        if: steps.check-blueprints.outputs.has_blueprints != 'true'
+        run: |
+          mkdir -p artifact
+          echo '{"error": true, "message": "No blueprints found in this pack"}' > artifact/NO_BLUEPRINTS.json
+          echo "No blueprints found in this pack" > artifact/NO_BLUEPRINTS.txt
       - name: Upload plugins folder
-        if: steps.check-blueprints.outputs.has_blueprints == 'true'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: meg4-output-${{ github.event.issue.number }}
