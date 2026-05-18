@@ -247,26 +247,18 @@ jobs:
                 fi
               fi
             fi
-            if ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 || find "${PACK_DIR}" -maxdepth 4 -name "ia_*" | grep -q .; then
-              HAS_CONTENTS=false
-              HAS_STORAGE=false
-              if [ -d "${PACK_DIR}/contents" ] || find "${PACK_DIR}" -maxdepth 4 -type d -name "contents" | grep -q .; then
-                HAS_CONTENTS=true
-              fi
-              if [ -d "${PACK_DIR}/storage" ] || find "${PACK_DIR}" -maxdepth 4 -type d -name "storage" | grep -q .; then
-                HAS_STORAGE=true
-              fi
-              if [ "${HAS_CONTENTS}" = false ] || [ "${HAS_STORAGE}" = false ]; then
-                write_error \
-                  "Invalid pack structure! It was detected that your pack was created by ItemsAdder but missing \`contents\` and \`storage/items_ids_cache.yml\`" \
-                  "http://thunder.pikamc.vn:25164/wiki/#itemsadder"
-                exit 1
-              fi
-            elif find "${PACK_DIR}" -maxdepth 4 -type d -name "nexo_*" | grep -q . || find "${PACK_DIR}" -maxdepth 4 -name "nexo_*" | grep -q .; then
+            if ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1; then
               if [ ! -d "${PACK_DIR}/items" ]; then
                 write_error \
                   "Invalid pack structure! It was detected that your pack was created by Nexo but missing \`items\` folder" \
                   "http://thunder.pikamc.vn:25164/wiki/#nexo"
+                exit 1
+              fi
+            elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1; then
+              if [ ! -d "${PACK_DIR}/contents" ] || [ ! -d "${PACK_DIR}/storage" ]; then
+                write_error \
+                  "Invalid pack structure! It was detected that your pack was created by ItemsAdder but missing \`contents\` and \`storage/items_ids_cache.yml\`" \
+                  "http://thunder.pikamc.vn:25164/wiki/#itemsadder"
                 exit 1
               fi
             fi
