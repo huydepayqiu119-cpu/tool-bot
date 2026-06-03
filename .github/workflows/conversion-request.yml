@@ -584,7 +584,7 @@ jobs:
         with:
           name: Bedrock-${{ github.event.issue.number }}
           path: |
-            staging/campfire.mcpack
+            staging/*.mcpack
             staging/*.json
             staging/contents.zip
             staging/README.md
