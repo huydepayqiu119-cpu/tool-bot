@@ -413,11 +413,12 @@ jobs:
           fi
       - name: Install dependencies
         if: steps.check-blueprints.outputs.has_blueprints == 'true'
-        run: npm install adm-zip node-fetch@2
+        run: npm install adm-zip node-fetch@2 puppeteer
+      - name: Install Chromium for Puppeteer
+        if: steps.check-blueprints.outputs.has_blueprints == 'true'
+        run: npx puppeteer browsers install chrome
       - name: Run MEG4 export
         if: steps.check-blueprints.outputs.has_blueprints == 'true'
-        env:
-          SERVER_URL: ${{ secrets.SERVER_URL || 'http://thunder.pikamc.vn:25164' }}
         run: |
           node meg4_api_client.js pack/blueprints staging/meg4.zip
         continue-on-error: true
