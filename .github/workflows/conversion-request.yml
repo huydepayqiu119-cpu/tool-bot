@@ -201,36 +201,30 @@ jobs:
           echo "=== PACK_DIR contents after flatten ==="
           ls "${PACK_DIR}"
           ISSUE_TITLE="${{ github.event.issue.title }}"
-          if echo "${ISSUE_TITLE}" | grep -qi "\[FREE\]"; then
-            if [ -d "${PACK_DIR}/assets" ] && [ -f "${PACK_DIR}/pack.mcmeta" ] && ! ls "${PACK_DIR}"/ia_* > /dev/null 2>&1 && ! ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1; then
-              write_error "Invalid pack! Please ensure that your pack has been added to \`Nexo\` or \`ItemsAdder\`, and follows the standard structure below\n\n📦 **Nexo** — Pack Structure\n\`\`\`\npack.zip  # Exported from Nexo/pack\n├── assets\n├── nexo_*\n└── pack.mcmeta\n\`\`\`\n\n📦 **ItemsAdder** — Pack Structure\n\`\`\`\ngenerated.zip  # Exported from ItemsAdder/output\n├── assets\n├── ia_overlay_*\n└── pack.mcmeta\n\`\`\`"
-              exit 1
-            fi
-          else
-            if echo "${ISSUE_TITLE}" | grep -qi "V2" && echo "${ISSUE_TITLE}" | grep -qi "NON-OFFHAND"; then
+          if echo "${ISSUE_TITLE}" | grep -qi "V2" && echo "${ISSUE_TITLE}" | grep -qi "NON-OFFHAND"; then
+            write_error \
+              "Mappings v2 is not supported if you are using non-offhand conversion, please read the instructions carefully ❓・faq or read this [link](http://thunder.pikamc.vn:25164/wiki/#faq)"
+            exit 1
+          fi
+          if ! echo "${ISSUE_TITLE}" | grep -qi "\[EXE\]"; then
+            if [ -d "${PACK_DIR}/assets/oraxen" ]; then
               write_error \
-                "Mappings v2 is not supported if you are using non-offhand conversion, please read the instructions carefully ❓・faq or read this [link](http://thunder.pikamc.vn:25164/wiki/#faq)"
+                "This tool does not support Oraxen yet, please migrate your pack to ItemsAdder or Nexo first" \
+                "http://thunder.pikamc.vn:25164/wiki/#itemsadder" \
+                "http://thunder.pikamc.vn:25164/wiki/#nexo"
               exit 1
             fi
-            if ! echo "${ISSUE_TITLE}" | grep -qi "\[EXE\]"; then
-              if [ -d "${PACK_DIR}/assets/oraxen" ]; then
+            MCMETA_FILE=$(find "${PACK_DIR}" -maxdepth 3 -name "pack.mcmeta" | head -1)
+            if [ -n "${MCMETA_FILE}" ] && [ -f "${MCMETA_FILE}" ]; then
+              if grep -qi "CraftEngine ResourcePack\|CraftEngine" "${MCMETA_FILE}"; then
                 write_error \
-                  "This tool does not support Oraxen yet, please migrate your pack to ItemsAdder or Nexo first" \
+                  "This tool does not support CraftEngine yet, please migrate your pack to ItemsAdder or Nexo first" \
                   "http://thunder.pikamc.vn:25164/wiki/#itemsadder" \
                   "http://thunder.pikamc.vn:25164/wiki/#nexo"
                 exit 1
               fi
-              MCMETA_FILE=$(find "${PACK_DIR}" -maxdepth 3 -name "pack.mcmeta" | head -1)
-              if [ -n "${MCMETA_FILE}" ] && [ -f "${MCMETA_FILE}" ]; then
-                if grep -qi "CraftEngine ResourcePack\|CraftEngine" "${MCMETA_FILE}"; then
-                  write_error \
-                    "This tool does not support CraftEngine yet, please migrate your pack to ItemsAdder or Nexo first" \
-                    "http://thunder.pikamc.vn:25164/wiki/#itemsadder" \
-                    "http://thunder.pikamc.vn:25164/wiki/#nexo"
-                  exit 1
-                fi
-              fi
-            else
+            fi
+          else
               if find "${PACK_DIR}" -maxdepth 4 -type d -name "oraxen_*" | grep -q . || find "${PACK_DIR}" -maxdepth 4 -name "oraxen_*" | grep -q . || [ -d "${PACK_DIR}/assets/oraxen" ]; then
                 if [ ! -d "${PACK_DIR}/items" ]; then
                   write_error "Invalid pack structure! It was detected that your pack was created by Oraxen but missing \`items\` folder"
@@ -446,7 +440,95 @@ jobs:
           path: artifact/
           retention-days: 1
           if-no-files-found: warn
-          
+
+  bettermodel-export:
+    runs-on: ubuntu-latest
+    needs: [get-pack-info, validate-pack]
+    if: always() && needs.get-pack-info.result == 'success' && (needs.validate-pack.result == 'success' || needs.validate-pack.result == 'skipped') && contains(github.event.issue.title, '[EXE]')
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: huydepayqiu119-cpu/tools-cua-bot
+          token: ${{ secrets.TOOLS_PAT }}
+          fetch-depth: 1
+      - name: Install NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Download pack artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: input-pack-${{ github.event.issue.number }}
+          path: ./
+      - name: Extract pack
+        run: |
+          mkdir -p pack staging
+          unzip -q input_pack.zip -d pack
+      - name: Check for bettermodel
+        id: check-bettermodel
+        run: |
+          BBMODEL_COUNT=0
+          for dir in pack/models pack/players; do
+            if [ -d "$dir" ]; then
+              COUNT=$(find "$dir" -name "*.bbmodel" | wc -l)
+              BBMODEL_COUNT=$((BBMODEL_COUNT + COUNT))
+            fi
+          done
+          if [ "$BBMODEL_COUNT" -gt 0 ]; then
+            echo "has_bettermodel=true" >> $GITHUB_OUTPUT
+            echo "Found $BBMODEL_COUNT .bbmodel files"
+          else
+            echo "has_bettermodel=false" >> $GITHUB_OUTPUT
+            echo "No .bbmodel files found"
+          fi
+      - name: Merge into bettermodel folder
+        if: steps.check-bettermodel.outputs.has_bettermodel == 'true'
+        run: |
+          mkdir -p bettermodel
+          for dir in pack/models pack/players; do
+            if [ -d "$dir" ]; then
+              cp -r "$dir"/. bettermodel/
+            fi
+          done
+      - name: Install dependencies
+        if: steps.check-bettermodel.outputs.has_bettermodel == 'true'
+        run: npm install adm-zip node-fetch@2 puppeteer
+      - name: Install Chromium for Puppeteer
+        if: steps.check-bettermodel.outputs.has_bettermodel == 'true'
+        run: npx puppeteer browsers install chrome
+      - name: Run BetterModel export
+        if: steps.check-bettermodel.outputs.has_bettermodel == 'true'
+        run: |
+          node bettermodel_api_client.js bettermodel staging/bettermodel.zip
+        continue-on-error: true
+      - name: Create artifact structure
+        if: steps.check-bettermodel.outputs.has_bettermodel == 'true'
+        run: |
+          mkdir -p artifact
+          if [ -d "plugins" ]; then
+            cp -r plugins artifact/
+          fi
+          if [ -f "README.md" ]; then
+            cp README.md artifact/
+          fi
+      - name: Create empty artifact (no bettermodel)
+        if: steps.check-bettermodel.outputs.has_bettermodel != 'true'
+        run: |
+          mkdir -p artifact
+          echo '{"error": true, "message": "No bettermodel found in this pack"}' > artifact/NO_BETTERMODEL.json
+          echo "No bettermodel found in this pack" > artifact/NO_BETTERMODEL.txt
+      - name: Upload plugins folder
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bettermodel-output-${{ github.event.issue.number }}
+          path: artifact/
+          retention-days: 1
+          if-no-files-found: warn
+
   convert-pack:
     runs-on: ubuntu-latest
     needs: [get-pack-info, validate-pack]
