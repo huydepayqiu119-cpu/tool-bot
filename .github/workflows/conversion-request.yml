@@ -240,7 +240,6 @@ jobs:
                   fi
                 fi
               fi
-            fi
           fi
           if ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1; then
             if [ ! -d "${PACK_DIR}/items" ]; then
