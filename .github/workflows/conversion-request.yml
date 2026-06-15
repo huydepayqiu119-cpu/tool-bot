@@ -241,20 +241,20 @@ jobs:
                 fi
               fi
             fi
-            if ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1; then
-              if [ ! -d "${PACK_DIR}/items" ]; then
-                write_error \
-                  "Invalid pack structure! It was detected that your pack was created by Nexo but missing \`items\` folder" \
-                  "http://thunder.pikamc.vn:25164/wiki/#nexo"
-                exit 1
-              fi
-            elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1; then
-              if [ ! -d "${PACK_DIR}/contents" ] || [ ! -d "${PACK_DIR}/storage" ]; then
-                write_error \
-                  "Invalid pack structure! It was detected that your pack was created by ItemsAdder but missing \`contents\` and \`storage/items_ids_cache.yml\`" \
-                  "http://thunder.pikamc.vn:25164/wiki/#itemsadder"
-                exit 1
-              fi
+          fi
+          if ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1; then
+            if [ ! -d "${PACK_DIR}/items" ]; then
+              write_error \
+                "Invalid pack structure! It was detected that your pack was created by Nexo but missing \`items\` folder" \
+                "http://thunder.pikamc.vn:25164/wiki/#nexo"
+              exit 1
+            fi
+          elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1; then
+            if [ ! -d "${PACK_DIR}/contents" ] || [ ! -d "${PACK_DIR}/storage" ]; then
+              write_error \
+                "Invalid pack structure! It was detected that your pack was created by ItemsAdder but missing \`contents\` and \`storage/items_ids_cache.yml\`" \
+                "http://thunder.pikamc.vn:25164/wiki/#itemsadder"
+              exit 1
             fi
           fi
           rm -f "${GITHUB_WORKSPACE}/input_pack.zip"
