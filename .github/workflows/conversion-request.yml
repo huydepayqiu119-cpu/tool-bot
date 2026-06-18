@@ -684,6 +684,11 @@ jobs:
         with:
           name: meg4-output-${{ github.event.issue.number }}
         continue-on-error: true
+      - name: Delete bettermoodel-output artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: bettermodel-output-${{ github.event.issue.number }}
+        continue-on-error: true
   post-result:
     runs-on: ubuntu-latest
     needs: convert-pack
