@@ -250,7 +250,6 @@ jobs:
             fi
           elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1; then
             if [ -f "${PACK_DIR}/items_ids_cache.yml" ] && [ ! -f "${PACK_DIR}/storage/items_ids_cache.yml" ]; then
-              echo "INFO: Found items_ids_cache.yml at root, moving to storage/"
               mkdir -p "${PACK_DIR}/storage"
               mv "${PACK_DIR}/items_ids_cache.yml" "${PACK_DIR}/storage/items_ids_cache.yml"
             fi
