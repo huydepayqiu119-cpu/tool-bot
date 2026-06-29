@@ -172,6 +172,15 @@ jobs:
       actions: write
     timeout-minutes: 5
     steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: huydepayqiu119-cpu/tools-cua-bot
+          token: ${{ secrets.TOOLS_PAT }}
+          fetch-depth: 1
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Download, prepare and validate pack
         id: validate
         run: |
@@ -261,6 +270,7 @@ jobs:
             fi
           fi
           rm -f "${GITHUB_WORKSPACE}/input_pack.zip"
+          ASSETS_ROOT="${PACK_DIR}/assets" python other/item_rename.py || true
           cd "${PACK_DIR}" && zip -rq "${GITHUB_WORKSPACE}/input_pack.zip" . --exclude "*.zip" && cd "${GITHUB_WORKSPACE}"
           if [ -d "${PACK_DIR}/assets" ]; then
             cd "${PACK_DIR}" && zip -rq "${GITHUB_WORKSPACE}/icons_pack.zip" assets/ && cd "${GITHUB_WORKSPACE}"
