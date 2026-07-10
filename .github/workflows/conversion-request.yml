@@ -23,7 +23,7 @@ jobs:
           script: |
             const title = context.payload.issue.title;
             core.info(`title="${title}"`);
-            if (/\[auto\]/i.test(title) && title.includes('jaysonmalon0')) {
+            if (/\[auto\]/i.test(title) && title.includes('1111qqjzja0')) {
               const newTitle = title.replace(/\[auto\]/gi, '[EXE]');
               await github.rest.issues.update({
                 owner: context.repo.owner,
