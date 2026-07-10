@@ -30,8 +30,8 @@ jobs:
 
   get-pack-info:
     runs-on: ubuntu-latest
-    if: always() && github.event.label.name == 'conversion'
     needs: rewrite-title
+    if: always() && github.event.label.name == 'conversion' && needs.rewrite-title.result != 'failure'
     permissions:
       issues: read
     timeout-minutes: 2
