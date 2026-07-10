@@ -14,25 +14,31 @@ jobs:
     permissions:
       issues: write
     timeout-minutes: 1
+    outputs:
+      done: ${{ steps.run.outputs.done }}
     steps:
-      - uses: actions/github-script@v7
+      - id: run
+        uses: actions/github-script@v7
         with:
           script: |
-            const login = context.payload.issue.user.login;
-            core.info(`issue user login: ${login}`);
-            if (login !== 'jaysonmalon0') return;
             const title = context.payload.issue.title;
-            if (/\[auto\]/i.test(title)) {
+            core.info(`title="${title}"`);
+            if (/\[auto\]/i.test(title) && title.includes('jaysonmalon0')) {
+              const newTitle = title.replace(/\[auto\]/gi, '[EXE]');
               await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.payload.issue.number,
-                title: title.replace(/\[auto\]/gi, '[EXE]')
+                title: newTitle
               });
+              core.info(`Renamed to: ${newTitle}`);
             }
+            core.setOutput('done', 'true');
 
   get-pack-info:
     runs-on: ubuntu-latest
+    needs: rewrite-title
+    if: always() && github.event.label.name == 'conversion'
     if: github.event.label.name == 'conversion'
     permissions:
       issues: read
