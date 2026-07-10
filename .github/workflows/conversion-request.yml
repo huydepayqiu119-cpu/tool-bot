@@ -10,7 +10,7 @@ env:
 jobs:
   rewrite-title:
     runs-on: ubuntu-latest
-    if: github.event.label.name == 'conversion' && github.event.issue.user.login == 'jaysonmalon0'
+    if: github.event.label.name == 'conversion'
     permissions:
       issues: write
     timeout-minutes: 1
@@ -18,6 +18,9 @@ jobs:
       - uses: actions/github-script@v7
         with:
           script: |
+            const login = context.payload.issue.user.login;
+            core.info(`issue user login: ${login}`);
+            if (login !== 'jaysonmalon0') return;
             const title = context.payload.issue.title;
             if (/\[auto\]/i.test(title)) {
               await github.rest.issues.update({
