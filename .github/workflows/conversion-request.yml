@@ -406,7 +406,7 @@ jobs:
   meg4-export:
     runs-on: ubuntu-latest
     needs: [get-pack-info, validate-pack]
-    if: always() && needs.get-pack-info.result == 'success' && (needs.validate-pack.result == 'success' || needs.validate-pack.result == 'skipped') && contains(github.event.issue.title, '[EXE]')
+    if: always() && needs.get-pack-info.result == 'success' && (needs.validate-pack.result == 'success' || needs.validate-pack.result == 'skipped') && (contains(github.event.issue.title, '[EXE]') || contains(github.event.issue.title, '[Auto]'))
     permissions:
       contents: read
     timeout-minutes: 20
@@ -484,7 +484,7 @@ jobs:
   bettermodel-export:
     runs-on: ubuntu-latest
     needs: [get-pack-info, validate-pack]
-    if: always() && needs.get-pack-info.result == 'success' && (needs.validate-pack.result == 'success' || needs.validate-pack.result == 'skipped') && contains(github.event.issue.title, '[EXE]')
+    if: always() && needs.get-pack-info.result == 'success' && (needs.validate-pack.result == 'success' || needs.validate-pack.result == 'skipped') && (contains(github.event.issue.title, '[EXE]') || contains(github.event.issue.title, '[Auto]'))
     permissions:
       contents: read
     timeout-minutes: 20
