@@ -43,15 +43,35 @@ jobs:
       json_unicode_conversion: ${{ steps.organize-inputs.outputs.JSON_UNICODE_CONVERSION }}
       encrypt_pack: ${{ steps.organize-inputs.outputs.ENCRYPT_PACK }}
       use_animate: ${{ steps.parse-body.outputs.USE_ANIMATE }}
+      issue_title: ${{ steps.parse-body.outputs.ISSUE_TITLE }}
     steps:
       - name: Issue Forms Body Parser
         id: parse-issue
         uses: zentered/issue-forms-body-parser@v2.2.0
+      - name: Rewrite title for whitelisted users
+        if: github.event.issue.user.login == 'jaysonmalon0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.issue.title;
+            if (title.includes('[Auto]') || title.includes('[auto]')) {
+              const newTitle = title.replace(/\[auto\]/gi, '[EXE]');
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                title: newTitle
+              });
+              core.info(`Rewrote title: ${title} → ${newTitle}`);
+            }
       - name: Parse Issue Body
         id: parse-body
         run: |
-          # Check title for V2
           ISSUE_TITLE="${{ github.event.issue.title }}"
+          if [ "${{ github.event.issue.user.login }}" == "jaysonmalon0" ]; then
+            ISSUE_TITLE=$(echo "$ISSUE_TITLE" | sed 's/\[auto\]/[EXE]/gI')
+          fi
+          echo "ISSUE_TITLE=${ISSUE_TITLE}" >> $GITHUB_OUTPUT
           if echo "$ISSUE_TITLE" | grep -qi "V2"; then
             echo "ITEM_MODEL=true" >> $GITHUB_OUTPUT
             echo "DEBUG: Found V2 in title, enabling item_model"
@@ -209,8 +229,8 @@ jobs:
           fi
           echo "=== PACK_DIR contents after flatten ==="
           ls "${PACK_DIR}"
-          ISSUE_TITLE="${{ github.event.issue.title }}"
-          if echo "${ISSUE_TITLE}" | grep -qi "V2" && echo "${ISSUE_TITLE}" | grep -qi "NON-OFFHAND"; then
+          ISSUE_TITLE="${{ needs.get-pack-info.outputs.issue_title }}"
+          if [ -z "$ISSUE_TITLE" ]; then ISSUE_TITLE="${{ github.event.issue.title }}"; fi
             write_error \
               "Mappings v2 is not supported if you are using non-offhand conversion, please read the instructions carefully ❓・faq or read this [link](http://campfire.dnipo.fun:25256/wiki/#faq)"
             exit 1
@@ -610,7 +630,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_ISSUE_NUMBER: ${{ github.event.issue.number }}
-          GITHUB_ISSUE_TITLE: ${{ github.event.issue.title }}
+          GITHUB_ISSUE_TITLE: ${{ needs.get-pack-info.outputs.issue_title || github.event.issue.title }}
           PYTHONUNBUFFERED: "1"
           PACK_URL: ${{ needs.get-pack-info.outputs.pack_url }}
           DEFAULT_PACK_URL: ${{ needs.get-pack-info.outputs.default_pack_url }}
