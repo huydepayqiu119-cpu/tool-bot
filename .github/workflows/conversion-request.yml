@@ -201,14 +201,14 @@ jobs:
           FILE_TYPE=$(file -b --mime-type input_pack_raw)
           echo "Detected MIME type: ${FILE_TYPE}"
           if echo "${FILE_TYPE}" | grep -q "x-7z-compressed"; then
-            7z x input_pack_raw -o pack/ -y > /dev/null
+            7z x input_pack_raw "-opack/" -y > /dev/null
           elif echo "${FILE_TYPE}" | grep -q "x-rar\|vnd.rar"; then
-            7z x input_pack_raw -o pack/ -y > /dev/null
+            7z x input_pack_raw "-opack/" -y > /dev/null
           elif echo "${FILE_TYPE}" | grep -q "x-tar\|gzip\|x-bzip2\|x-xz"; then
-            tar -xf input_pack_raw -C pack/ 2>/dev/null || 7z x input_pack_raw -o pack/ -y > /dev/null
+            tar -xf input_pack_raw -C pack/ 2>/dev/null || 7z x input_pack_raw "-opack/" -y > /dev/null
           else
             cp input_pack_raw input_pack.zip
-            unzip -q input_pack.zip -d pack/ || 7z x input_pack.zip -o pack/ -y > /dev/null || true
+            unzip -q input_pack.zip -d pack/ || 7z x input_pack.zip "-opack/" -y > /dev/null || true
           fi
           rm -f input_pack_raw
           PACK_DIR="${GITHUB_WORKSPACE}/pack"
