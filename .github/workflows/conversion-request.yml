@@ -270,7 +270,7 @@ jobs:
                 fi
               fi
               if [ -d "${PACK_DIR}/packs" ] || [ -d "${PACK_DIR}/assets/mythic" ]; then
-                write_error "Invalid pack structure! It was detected that your pack was created by MythicCrucible but missing \`packs\` folder"
+                write_error "This tool does not support MythicCrucible, please migrate your pack to ItemsAdder or Nexo first"
                 exit 1
               fi
           fi
