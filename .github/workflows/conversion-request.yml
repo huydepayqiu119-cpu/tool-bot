@@ -236,6 +236,13 @@ jobs:
                 "http://campfire.dnipo.fun:25256/wiki/#nexo"
               exit 1
             fi
+            if [ -d "${PACK_DIR}/packs" ] || [ -d "${PACK_DIR}/assets/mythic" ]; then
+              write_error \
+                "This tool does not support MythicCrucible yet, please migrate your pack to ItemsAdder or Nexo first" \
+                "http://campfire.dnipo.fun:25256/wiki/#itemsadder" \
+                "http://campfire.dnipo.fun:25256/wiki/#nexo"
+              exit 1
+            fi
             MCMETA_FILE=$(find "${PACK_DIR}" -maxdepth 3 -name "pack.mcmeta" | head -1)
             if [ -n "${MCMETA_FILE}" ] && [ -f "${MCMETA_FILE}" ]; then
               if grep -qi "CraftEngine ResourcePack\|CraftEngine" "${MCMETA_FILE}"; then
@@ -261,6 +268,10 @@ jobs:
                     exit 1
                   fi
                 fi
+              fi
+              if [ -d "${PACK_DIR}/packs" ] || [ -d "${PACK_DIR}/assets/mythic" ]; then
+                write_error "Invalid pack structure! It was detected that your pack was created by MythicCrucible but missing \`packs\` folder"
+                exit 1
               fi
           fi
           if ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1; then
