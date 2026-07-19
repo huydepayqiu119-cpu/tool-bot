@@ -236,7 +236,7 @@ jobs:
                 "http://campfire.dnipo.fun:25256/wiki/#nexo"
               exit 1
             fi
-            if [ -d "${PACK_DIR}/packs" ] || [ -d "${PACK_DIR}/assets/mythic" ]; then
+            if [ -d "${PACK_DIR}/packs" ] && [ -f "${PACK_DIR}/config-generation.yml" ]; then
               write_error \
                 "This tool does not support MythicCrucible yet, please migrate your pack to ItemsAdder or Nexo first" \
                 "http://campfire.dnipo.fun:25256/wiki/#itemsadder" \
@@ -269,9 +269,11 @@ jobs:
                   fi
                 fi
               fi
-              if [ -d "${PACK_DIR}/packs" ] || [ -d "${PACK_DIR}/assets/mythic" ]; then
-                write_error "This tool does not support MythicCrucible, please migrate your pack to ItemsAdder or Nexo first"
-                exit 1
+              if [ -d "${PACK_DIR}/packs" ] || [ -f "${PACK_DIR}/config-generation.yml" ]; then
+                if [ ! -d "${PACK_DIR}/packs" ] || [ ! -f "${PACK_DIR}/config-generation.yml" ]; then
+                  write_error "Invalid pack structure! It was detected that your pack was created by MythicCrucible but missing \`packs\` folder and \`config-generation.yml\`"
+                  exit 1
+                fi
               fi
           fi
           if ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1; then
