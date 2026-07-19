@@ -236,7 +236,7 @@ jobs:
                 "http://campfire.dnipo.fun:25256/wiki/#nexo"
               exit 1
             fi
-            if [ -d "${PACK_DIR}/packs" ] && [ -f "${PACK_DIR}/config-generation.yml" ]; then
+            if [ -d "${PACK_DIR}/packs" ] || [ -f "${PACK_DIR}/config-generation.yml" ]; then
               write_error \
                 "This tool does not support MythicCrucible yet, please migrate your pack to ItemsAdder or Nexo first" \
                 "http://campfire.dnipo.fun:25256/wiki/#itemsadder" \
