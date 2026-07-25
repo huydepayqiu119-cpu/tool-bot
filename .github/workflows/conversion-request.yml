@@ -723,6 +723,7 @@ jobs:
             staging/items.zip
             staging/DisplayEntity (README)/**
             staging/ModelEngine 4 (README)/**
+            staging/BetterModel (README)/**
       - name: Delete generated-icons artifact
         uses: geekyeggo/delete-artifact@v5
         with:
