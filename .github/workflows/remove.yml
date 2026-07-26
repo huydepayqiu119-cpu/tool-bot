@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: write
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
       - name: Delete completed workflow run
         uses: actions/github-script@v7
