@@ -583,7 +583,7 @@ jobs:
     if: always() && needs.get-pack-info.result == 'success' && (needs.validate-pack.result == 'success' || needs.validate-pack.result == 'skipped')
     permissions:
       contents: read
-    timeout-minutes: 1
+    timeout-minutes: 300
     outputs:
       run_id: ${{ steps.get-pack-info.outputs.pack_url }} 
     steps:
