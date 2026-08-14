@@ -223,12 +223,14 @@ jobs:
           echo "=== PACK_DIR contents after flatten ==="
           ls "${PACK_DIR}"
           echo "=== Renaming files/folders with (N) suffix ==="
-          while IFS= read -r -d '' src; do
-            dst=$(printf '%s' "$src" | sed -E 's/ \([0-9]+\)((\.[^./]*)?)$/\1/')
-            if [ "$src" != "$dst" ] && [ ! -e "$dst" ]; then
+          find "${PACK_DIR}" -depth -regex '.* ([0-9]+)\(\.[^/]*\)?$' -print0 2>/dev/null | while IFS= read -r -d '' src; do
+            dst=$(echo "$src" | sed -E 's/ \([0-9]+\)((\.[^./]*)?)$/\1/')
+            if [ ! -e "$dst" ]; then
               mv "$src" "$dst" && echo "Renamed: $src -> $dst"
+            else
+              echo "Skipped: $src"
             fi
-          done < <(find "${PACK_DIR}" -depth -print0 2>/dev/null | grep -zE ' \([0-9]+\)(\.[^/]*)?$')
+          done
           ISSUE_TITLE="${{ github.event.issue.title }}"
           if echo "${ISSUE_TITLE}" | grep -qi "V2" && echo "${ISSUE_TITLE}" | grep -qi "NON-OFFHAND"; then
             write_error \
