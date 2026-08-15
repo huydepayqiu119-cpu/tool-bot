@@ -245,12 +245,17 @@ jobs:
           fi
           echo "DEBUG: Rename step complete"
           ISSUE_TITLE="${{ github.event.issue.title }}"
+          echo "DEBUG: ISSUE_TITLE = ${ISSUE_TITLE}"
+          echo "DEBUG: Checking V2 + NON-OFFHAND..."
           if echo "${ISSUE_TITLE}" | grep -qi "V2" && echo "${ISSUE_TITLE}" | grep -qi "NON-OFFHAND"; then
             write_error \
               "Mappings v2 is not supported if you are using non-offhand conversion, please read the instructions carefully ❓・faq or read this [link](http://jetstream.pikamc.vn:25630/wiki/#faq)"
             exit 1
           fi
+          echo "DEBUG: Checking [EXE] in title..."
           if ! echo "${ISSUE_TITLE}" | grep -qi "\[EXE\]"; then
+            echo "DEBUG: Not EXE mode - checking non-EXE pack structure..."
+            echo "DEBUG: Checking assets/oraxen..."
             if [ -d "${PACK_DIR}/assets/oraxen" ]; then
               write_error \
                 "This tool does not support Oraxen yet, please migrate your pack to ItemsAdder or Nexo first" \
@@ -258,6 +263,7 @@ jobs:
                 "http://jetstream.pikamc.vn:25630/wiki/#nexo"
               exit 1
             fi
+            echo "DEBUG: Checking MythicCrucible..."
             if [ -d "${PACK_DIR}/packs" ] || [ -f "${PACK_DIR}/config-generation.yml" ]; then
               write_error \
                 "This tool does not support MythicCrucible yet, please migrate your pack to ItemsAdder or Nexo first" \
@@ -265,8 +271,11 @@ jobs:
                 "http://jetstream.pikamc.vn:25630/wiki/#nexo"
               exit 1
             fi
+            echo "DEBUG: Finding pack.mcmeta for CraftEngine check..."
             MCMETA_FILE=$(find "${PACK_DIR}" -maxdepth 3 -name "pack.mcmeta" | head -1)
+            echo "DEBUG: MCMETA_FILE = ${MCMETA_FILE}"
             if [ -n "${MCMETA_FILE}" ] && [ -f "${MCMETA_FILE}" ]; then
+              echo "DEBUG: Checking CraftEngine in mcmeta..."
               if grep -qi "CraftEngine ResourcePack\|CraftEngine" "${MCMETA_FILE}"; then
                 write_error \
                   "This tool does not support CraftEngine yet, please migrate your pack to ItemsAdder or Nexo first" \
@@ -275,30 +284,41 @@ jobs:
                 exit 1
               fi
             fi
+            echo "DEBUG: Non-EXE structure checks passed"
           else
-              if find "${PACK_DIR}" -maxdepth 4 -type d -name "oraxen_*" | grep -q . || find "${PACK_DIR}" -maxdepth 4 -name "oraxen_*" | grep -q . || [ -d "${PACK_DIR}/assets/oraxen" ]; then
-                if [ ! -d "${PACK_DIR}/items" ]; then
-                  write_error "Invalid pack structure! It was detected that your pack was created by Oraxen but missing \`items\` folder"
+            echo "DEBUG: EXE mode - checking EXE pack structure..."
+            echo "DEBUG: Searching for oraxen_ dirs (maxdepth 4)..."
+            if find "${PACK_DIR}" -maxdepth 4 -type d -name "oraxen_*" | grep -q . || find "${PACK_DIR}" -maxdepth 4 -name "oraxen_*" | grep -q . || [ -d "${PACK_DIR}/assets/oraxen" ]; then
+              echo "DEBUG: Oraxen detected, checking items folder..."
+              if [ ! -d "${PACK_DIR}/items" ]; then
+                write_error "Invalid pack structure! It was detected that your pack was created by Oraxen but missing \`items\` folder"
+                exit 1
+              fi
+            fi
+            echo "DEBUG: Finding pack.mcmeta for CraftEngine check (EXE)..."
+            MCMETA_FILE=$(find "${PACK_DIR}" -maxdepth 3 -name "pack.mcmeta" | head -1)
+            echo "DEBUG: MCMETA_FILE = ${MCMETA_FILE}"
+            if [ -n "${MCMETA_FILE}" ] && [ -f "${MCMETA_FILE}" ]; then
+              echo "DEBUG: Checking CraftEngine in mcmeta (EXE)..."
+              if grep -qi "CraftEngine ResourcePack\|CraftEngine" "${MCMETA_FILE}"; then
+                if [ ! -d "${PACK_DIR}/resources" ]; then
+                  write_error "Invalid pack structure! It was detected that your pack was created by CraftEngine but missing \`resources\` folder"
                   exit 1
                 fi
               fi
-              MCMETA_FILE=$(find "${PACK_DIR}" -maxdepth 3 -name "pack.mcmeta" | head -1)
-              if [ -n "${MCMETA_FILE}" ] && [ -f "${MCMETA_FILE}" ]; then
-                if grep -qi "CraftEngine ResourcePack\|CraftEngine" "${MCMETA_FILE}"; then
-                  if [ ! -d "${PACK_DIR}/resources" ]; then
-                    write_error "Invalid pack structure! It was detected that your pack was created by CraftEngine but missing \`resources\` folder"
-                    exit 1
-                  fi
-                fi
+            fi
+            echo "DEBUG: Checking MythicCrucible (EXE)..."
+            if [ -d "${PACK_DIR}/packs" ] || [ -f "${PACK_DIR}/config-generation.yml" ]; then
+              if [ ! -d "${PACK_DIR}/packs" ] || [ ! -f "${PACK_DIR}/config-generation.yml" ]; then
+                write_error "Invalid pack structure! It was detected that your pack was created by MythicCrucible but missing \`packs\` folder and \`config-generation.yml\`"
+                exit 1
               fi
-              if [ -d "${PACK_DIR}/packs" ] || [ -f "${PACK_DIR}/config-generation.yml" ]; then
-                if [ ! -d "${PACK_DIR}/packs" ] || [ ! -f "${PACK_DIR}/config-generation.yml" ]; then
-                  write_error "Invalid pack structure! It was detected that your pack was created by MythicCrucible but missing \`packs\` folder and \`config-generation.yml\`"
-                  exit 1
-                fi
-              fi
+            fi
+            echo "DEBUG: EXE structure checks passed"
           fi
+          echo "DEBUG: Checking nexo_* / ia_* patterns..."
           if ls "${PACK_DIR}"/nexo_* > /dev/null 2>&1; then
+            echo "DEBUG: nexo_* files found"
             if [ ! -d "${PACK_DIR}/items" ]; then
               write_error \
                 "Invalid pack structure! It was detected that your pack was created by Nexo but missing \`items\` folder" \
@@ -306,6 +326,7 @@ jobs:
               exit 1
             fi
           elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1; then
+            echo "DEBUG: ia_* files found"
             if [ -f "${PACK_DIR}/items_ids_cache.yml" ] && [ ! -f "${PACK_DIR}/storage/items_ids_cache.yml" ]; then
               mkdir -p "${PACK_DIR}/storage"
               mv "${PACK_DIR}/items_ids_cache.yml" "${PACK_DIR}/storage/items_ids_cache.yml"
@@ -316,13 +337,22 @@ jobs:
                 "http://jetstream.pikamc.vn:25630/wiki/#itemsadder"
               exit 1
             fi
+          else
+            echo "DEBUG: No nexo_* or ia_* files found"
           fi
+          echo "DEBUG: All structure checks done, starting zip..."
           rm -f "${GITHUB_WORKSPACE}/input_pack.zip"
+          echo "DEBUG: Running item_rename.py..."
           ASSETS_ROOT="${PACK_DIR}/assets" python other/item_rename.py || true
+          echo "DEBUG: item_rename.py done, zipping input_pack..."
           cd "${PACK_DIR}" && zip -rq "${GITHUB_WORKSPACE}/input_pack.zip" . --exclude "*.zip" && cd "${GITHUB_WORKSPACE}"
+          echo "DEBUG: input_pack.zip done"
           if [ -d "${PACK_DIR}/assets" ]; then
+            echo "DEBUG: Zipping icons_pack..."
             cd "${PACK_DIR}" && zip -rq "${GITHUB_WORKSPACE}/icons_pack.zip" assets/ && cd "${GITHUB_WORKSPACE}"
+            echo "DEBUG: icons_pack.zip done"
           fi
+          echo "DEBUG: validate step complete"
         env:
           PACK_URL: ${{ needs.get-pack-info.outputs.pack_url }}
       - name: Upload pack artifact
