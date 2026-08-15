@@ -343,8 +343,19 @@ jobs:
           echo "DEBUG: All structure checks done, starting zip..."
           rm -f "${GITHUB_WORKSPACE}/input_pack.zip"
           echo "DEBUG: Running item_rename.py..."
-          ASSETS_ROOT="${PACK_DIR}/assets" python other/item_rename.py || true
-          echo "DEBUG: item_rename.py done, zipping input_pack..."
+          ITEM_RENAME_START=$(date +%s)
+          ASSETS_ROOT="${PACK_DIR}/assets" timeout 120 python other/item_rename.py || {
+            EXIT_CODE=$?
+            ITEM_RENAME_END=$(date +%s)
+            ELAPSED=$((ITEM_RENAME_END - ITEM_RENAME_START))
+            if [ $EXIT_CODE -eq 124 ]; then
+              echo "DEBUG: item_rename.py TIMED OUT after ${ELAPSED}s (exit code 124)"
+            else
+              echo "DEBUG: item_rename.py exited with code ${EXIT_CODE} after ${ELAPSED}s"
+            fi
+          }
+          ITEM_RENAME_END=$(date +%s)
+          echo "DEBUG: item_rename.py done in $((ITEM_RENAME_END - ITEM_RENAME_START))s, zipping input_pack..."
           cd "${PACK_DIR}" && zip -rq "${GITHUB_WORKSPACE}/input_pack.zip" . --exclude "*.zip" && cd "${GITHUB_WORKSPACE}"
           echo "DEBUG: input_pack.zip done"
           if [ -d "${PACK_DIR}/assets" ]; then
