@@ -223,16 +223,27 @@ jobs:
           echo "=== PACK_DIR contents after flatten ==="
           ls "${PACK_DIR}"
           echo "=== Renaming files/folders with (N) suffix ==="
-          timeout 30 bash -c '
-            find "'"${PACK_DIR}"'" -depth -name "* (*)" -print0 2>/dev/null | while IFS= read -r -d $'"'"'\0'"'"' src; do
-              dst=$(echo "$src" | sed -E "s/ \([0-9]+\)((\.[^./]*)?)$/\1/")
-              if [ "$src" != "$dst" ] && [ ! -e "$dst" ]; then
+          echo "DEBUG: Scanning for files/folders with (N) suffix in ${PACK_DIR}..."
+          RENAME_LIST=$(find "${PACK_DIR}" -depth -regex '.* ([0-9]+)\(\.[^/]*\)?$' -print0 2>/dev/null | tr '\0' '\n')
+          RENAME_COUNT=$(echo "$RENAME_LIST" | grep -c . || true)
+          echo "DEBUG: Found ${RENAME_COUNT} file(s)/folder(s) to rename"
+          if [ "${RENAME_COUNT}" -gt 0 ]; then
+            RENAME_IDX=0
+            find "${PACK_DIR}" -depth -regex '.* ([0-9]+)\(\.[^/]*\)?$' -print0 2>/dev/null | while IFS= read -r -d '' src; do
+              RENAME_IDX=$((RENAME_IDX + 1))
+              echo "DEBUG: Processing [${RENAME_IDX}/${RENAME_COUNT}]: $src"
+              dst=$(echo "$src" | sed -E 's/ \([0-9]+\)((\.[^./]*)?)$/\1/')
+              echo "DEBUG: Target name: $dst"
+              if [ ! -e "$dst" ]; then
                 mv "$src" "$dst" && echo "Renamed: $src -> $dst"
               else
-                echo "Skipped: $src"
+                echo "Skipped (destination exists): $src -> $dst"
               fi
             done
-          ' || echo "Rename step finished"
+          else
+            echo "DEBUG: No files to rename, skipping loop"
+          fi
+          echo "DEBUG: Rename step complete"
           ISSUE_TITLE="${{ github.event.issue.title }}"
           if echo "${ISSUE_TITLE}" | grep -qi "V2" && echo "${ISSUE_TITLE}" | grep -qi "NON-OFFHAND"; then
             write_error \
@@ -247,7 +258,7 @@ jobs:
                 "http://jetstream.pikamc.vn:25630/wiki/#nexo"
               exit 1
             fi
-            if [ -d "${PACK_DIR}/packs" ] && [ -f "${PACK_DIR}/config-generation.yml" ]; then
+            if [ -d "${PACK_DIR}/packs" ] || [ -f "${PACK_DIR}/config-generation.yml" ]; then
               write_error \
                 "This tool does not support MythicCrucible yet, please migrate your pack to ItemsAdder or Nexo first" \
                 "http://jetstream.pikamc.vn:25630/wiki/#itemsadder" \
