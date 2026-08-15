@@ -344,18 +344,12 @@ jobs:
           rm -f "${GITHUB_WORKSPACE}/input_pack.zip"
           echo "DEBUG: Running item_rename.py..."
           ITEM_RENAME_START=$(date +%s)
-          ASSETS_ROOT="${PACK_DIR}/assets" timeout 120 python other/item_rename.py || {
-            EXIT_CODE=$?
-            ITEM_RENAME_END=$(date +%s)
-            ELAPSED=$((ITEM_RENAME_END - ITEM_RENAME_START))
-            if [ $EXIT_CODE -eq 124 ]; then
-              echo "DEBUG: item_rename.py TIMED OUT after ${ELAPSED}s (exit code 124)"
-            else
-              echo "DEBUG: item_rename.py exited with code ${EXIT_CODE} after ${ELAPSED}s"
-            fi
-          }
+          ASSETS_ROOT="${PACK_DIR}/assets" timeout 120 python -u other/item_rename.py 2>&1 | while IFS= read -r line; do
+            echo "PYRENAME: $line"
+          done || true
           ITEM_RENAME_END=$(date +%s)
-          echo "DEBUG: item_rename.py done in $((ITEM_RENAME_END - ITEM_RENAME_START))s, zipping input_pack..."
+          ELAPSED=$((ITEM_RENAME_END - ITEM_RENAME_START))
+          echo "DEBUG: item_rename.py done in ${ELAPSED}s, zipping input_pack..."
           cd "${PACK_DIR}" && zip -rq "${GITHUB_WORKSPACE}/input_pack.zip" . --exclude "*.zip" && cd "${GITHUB_WORKSPACE}"
           echo "DEBUG: input_pack.zip done"
           if [ -d "${PACK_DIR}/assets" ]; then
