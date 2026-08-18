@@ -234,22 +234,22 @@ jobs:
           ISSUE_TITLE="${{ github.event.issue.title }}"
           if echo "${ISSUE_TITLE}" | grep -qi "V2" && echo "${ISSUE_TITLE}" | grep -qi "NON-OFFHAND"; then
             write_error \
-              "Mappings v2 is not supported if you are using non-offhand conversion, please read the instructions carefully ❓・faq or read this [link](http://convert.campfiremc.online:25630/wiki/#faq)"
+              "Mappings v2 is not supported if you are using non-offhand conversion, please read the instructions carefully ❓・faq or read this [link](http://jetstream.pikamc.vn:25630/wiki/#faq)"
             exit 1
           fi
           if ! echo "${ISSUE_TITLE}" | grep -qi "\[EXE\]"; then
             if [ -d "${PACK_DIR}/assets/oraxen" ]; then
               write_error \
                 "This tool does not support Oraxen yet, please migrate your pack to ItemsAdder or Nexo first" \
-                "http://convert.campfiremc.online:25630/wiki/#itemsadder" \
-                "http://convert.campfiremc.online:25630/wiki/#nexo"
+                "http://jetstream.pikamc.vn:25630/wiki/#itemsadder" \
+                "http://jetstream.pikamc.vn:25630/wiki/#nexo"
               exit 1
             fi
             if [ -d "${PACK_DIR}/packs" ] || [ -f "${PACK_DIR}/config-generation.yml" ]; then
               write_error \
                 "This tool does not support MythicCrucible yet, please migrate your pack to ItemsAdder or Nexo first" \
-                "http://convert.campfiremc.online:25630/wiki/#itemsadder" \
-                "http://convert.campfiremc.online:25630/wiki/#nexo"
+                "http://jetstream.pikamc.vn:25630/wiki/#itemsadder" \
+                "http://jetstream.pikamc.vn:25630/wiki/#nexo"
               exit 1
             fi
             MCMETA_FILE=$(find "${PACK_DIR}" -maxdepth 3 -name "pack.mcmeta" | head -1)
@@ -257,8 +257,8 @@ jobs:
               if grep -qi "CraftEngine ResourcePack\|CraftEngine" "${MCMETA_FILE}"; then
                 write_error \
                   "This tool does not support CraftEngine yet, please migrate your pack to ItemsAdder or Nexo first" \
-                  "http://convert.campfiremc.online:25630/wiki/#itemsadder" \
-                  "http://convert.campfiremc.online:25630/wiki/#nexo"
+                  "http://jetstream.pikamc.vn:25630/wiki/#itemsadder" \
+                  "http://jetstream.pikamc.vn:25630/wiki/#nexo"
                 exit 1
               fi
             fi
@@ -289,7 +289,7 @@ jobs:
             if [ ! -d "${PACK_DIR}/items" ]; then
               write_error \
                 "Invalid pack structure! It was detected that your pack was created by Nexo but missing \`items\` folder" \
-                "http://convert.campfiremc.online:25630/wiki/#nexo"
+                "http://jetstream.pikamc.vn:25630/wiki/#nexo"
               exit 1
             fi
           elif ls "${PACK_DIR}"/ia_* > /dev/null 2>&1; then
@@ -300,7 +300,7 @@ jobs:
             if [ ! -d "${PACK_DIR}/contents" ] || [ ! -d "${PACK_DIR}/storage" ]; then
               write_error \
                 "Invalid pack structure! It was detected that your pack was created by ItemsAdder but missing \`contents\` and \`storage/items_ids_cache.yml\`" \
-                "http://convert.campfiremc.online:25630/wiki/#itemsadder"
+                "http://jetstream.pikamc.vn:25630/wiki/#itemsadder"
               exit 1
             fi
           fi
